@@ -35,51 +35,18 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            line-height: 1.4;
-            padding-bottom: 50px;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.4; padding-bottom: 50px; }
 
         /* --- ANIMACIONES --- */
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(18px);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            will-change: opacity, transform;
-        }
+        .fade-in-section { opacity: 0; transform: translateY(18px); transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
         .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
 
         /* --- HEADER --- */
-        header {
-            background-color: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            color: var(--surface);
-            padding: 1rem 1.25rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        header { background-color: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px); color: var(--surface); padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
-        .logo-icon {
-            width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0284c7);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 0.9rem;
-        }
-        .live-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.7rem;
-            font-weight: 700; padding: 4px 10px; border-radius: 20px;
-        }
-        .pulse-dot {
-            width: 6px; height: 6px; background-color: #34d399; border-radius: 50%;
-            animation: pulse 1.8s infinite;
-        }
+        .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0284c7); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; }
+        .live-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .pulse-dot { width: 6px; height: 6px; background-color: #34d399; border-radius: 50%; animation: pulse 1.8s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
 
         /* --- LAYOUT PRINCIPAL --- */
@@ -88,7 +55,7 @@
         .section-title { font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .section-badge { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
 
-        /* --- KPIS --- */
+        /* --- KPIS, FLOTA, GRAFICOS Y LISTAS (Estilos Base Mantenidos) --- */
         .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
         .kpi-card.featured { grid-column: span 2; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border: none; }
@@ -102,30 +69,25 @@
         .kpi-trend { margin-top: 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background-color: var(--success-light); color: var(--success); }
         .kpi-card.featured .kpi-trend { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
 
-        /* --- ALMACENES MÓVILES --- */
         .fleet-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
         .fleet-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
         .fleet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .fleet-name { font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .fleet-trip { background-color: var(--primary-light); color: var(--primary-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; }
-        
         .inventory-bar { width: 100%; height: 10px; background-color: var(--surface-subtle); border-radius: 5px; overflow: hidden; margin: 10px 0; }
         .inventory-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); border-radius: 5px; transition: width 0.8s ease; }
         .inventory-fill.low { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-        
         .fleet-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
         .status-ruta { color: var(--warning); display: flex; align-items: center; gap: 4px; }
         .status-planta { color: var(--success); display: flex; align-items: center; gap: 4px; }
         .status-planta i { animation: fa-spin 2s linear infinite; }
 
-        /* --- GRÁFICO FLUIDO --- */
         .chart-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
         .chart-header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); }
         .chart-stat-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
         .chart-stat-val { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
         .chart-container { position: relative; height: 220px; width: 100%; }
         
-        /* --- LISTA DE DESPACHOS --- */
         .delivery-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
         .delivery-item { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
         .delivery-left { display: flex; align-items: center; gap: 12px; }
@@ -134,15 +96,28 @@
         .delivery-meta-sub { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
         .delivery-right { text-align: right; }
         .delivery-price { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
-        
         .payment-pill { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; display: inline-block; margin-top: 3px; }
         .pay-efectivo { background: #dcfce7; color: #15803d; }
         .pay-qr { background: #e0f2fe; color: #0369a1; }
         .pay-credito { background: #fef3c7; color: #b45309; }
         .pay-transferencia { background: #f3e8ff; color: #7e22ce; }
-        
-        /* Loading States */
         .loading-text { text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 20px; }
+
+        /* --- NUEVO: ESTILOS PARA FORMULARIO Y LISTA DE CHOFERES --- */
+        .form-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm); }
+        .input-group { margin-bottom: 12px; }
+        .input-group input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--bg-body); }
+        .input-group input:focus { border-color: var(--primary); background: var(--surface); }
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.95rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s; }
+        .btn-primary:active { opacity: 0.8; }
+        
+        .driver-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+        .driver-item { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+        .driver-info { display: flex; align-items: center; gap: 12px; }
+        .driver-avatar { width: 38px; height: 38px; background: var(--primary-light); color: var(--primary-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .driver-name { font-weight: 800; font-size: 0.88rem; color: var(--text-main); margin-bottom: 2px; }
+        .driver-tel { font-size: 0.72rem; color: var(--text-muted); font-weight: 600;}
+        .driver-status { font-size: 0.65rem; padding: 4px 8px; border-radius: 12px; background: var(--success-light); color: var(--success); font-weight: 800; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -196,7 +171,6 @@
                 <h2 class="section-title"><i class="fa-solid fa-truck-fast" style="color: var(--primary);"></i> Inventario en Ruta</h2>
                 <span class="section-badge">Almacenes Móviles</span>
             </div>
-            
             <div class="fleet-wrapper" id="fleet-list">
                 <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando flota...</div>
             </div>
@@ -208,7 +182,6 @@
                 <h2 class="section-title"><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Flujo de Ventas</h2>
                 <span class="section-badge">Hoy</span>
             </div>
-            
             <div class="chart-card">
                 <div class="chart-header-info">
                     <div>
@@ -232,11 +205,37 @@
                 <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Últimas Entregas</h2>
                 <span class="section-badge">Tiempo real</span>
             </div>
-            
             <div class="delivery-list-wrapper" id="delivery-list">
                 <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando entregas...</div>
             </div>
         </section>
+
+        <!-- SECCIÓN 5: GESTIÓN DE CHOFERES (NUEVO) -->
+        <section class="fade-in-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-id-card-clip" style="color: var(--primary);"></i> Gestión de Choferes</h2>
+                <span class="section-badge">Personal</span>
+            </div>
+            
+            <div class="form-card">
+                <form id="form-chofer">
+                    <div class="input-group">
+                        <input type="text" id="chofer-nombre" placeholder="Nombre completo del chofer" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="tel" id="chofer-telefono" placeholder="Número de teléfono (Opcional)">
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-submit-chofer">
+                        <i class="fa-solid fa-user-plus"></i> Agregar Chofer
+                    </button>
+                </form>
+            </div>
+
+            <div class="driver-list-wrapper" id="driver-list">
+                <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando personal...</div>
+            </div>
+        </section>
+
     </main>
 
     <script>
@@ -246,22 +245,13 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5b2R2Z2Rtc3JzZHdjZ2psaXR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODM0MTYsImV4cCI6MjEwMTM1OTQxNn0.2Q_IUGGfnWytGCv01xVhiCYPPpSolGwEvly2Pp5KOKE';
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-        // Variables Globales
         let fluidChartInstance = null;
-
-        // Utilidades de formato
         const fmtBs = (val) => `Bs. ${Number(val).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        
-        const formatTime = (dateString) => {
-            const date = new Date(dateString);
-            return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
-        };
+        const formatTime = (dateString) => new Date(dateString).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 
-        // Mostrar fecha actual
         const now = new Date();
         document.getElementById('current-date').innerText = now.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
 
-        // Configuración de Animaciones de Scroll
         const initScrollAnimations = () => {
             const sections = document.querySelectorAll('.fade-in-section');
             const observer = new IntersectionObserver((entries) => {
@@ -275,200 +265,150 @@
             sections.forEach(s => observer.observe(s));
         };
 
-        // Cargar Datos de Flota (Almacenes Móviles)
         async function fetchFlota() {
             try {
-                const { data: flotaData, error } = await supabaseClient
-                    .from('flota')
-                    .select('*')
-                    .order('nombre');
-
+                const { data: flotaData, error } = await supabaseClient.from('flota').select('*').order('nombre');
                 if (error) throw error;
-
                 const fleetContainer = document.getElementById('fleet-list');
-                fleetContainer.innerHTML = ''; // Limpiar loader
-
+                fleetContainer.innerHTML = ''; 
                 flotaData.forEach(f => {
                     const porcentaje = Math.max(0, Math.min(100, (f.stock_actual / f.capacidad_maxima) * 100));
                     const barClass = porcentaje < 25 ? 'inventory-fill low' : 'inventory-fill';
-                    
-                    let statusHtml = f.estado === 'ruta' 
-                        ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>`
-                        : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
-
+                    let statusHtml = f.estado === 'ruta' ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>` : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
                     fleetContainer.innerHTML += `
                         <div class="fleet-card">
-                            <div class="fleet-header">
-                                <div class="fleet-name"><i class="fa-solid fa-truck"></i> ${f.nombre}</div>
-                                <div class="fleet-trip">Viaje ${f.viaje_actual}</div>
-                            </div>
-                            <div class="inventory-bar">
-                                <div class="${barClass}" style="width: ${porcentaje}%"></div>
-                            </div>
-                            <div class="fleet-footer">
-                                <span>${f.stock_actual} / ${f.capacidad_maxima} Botellones</span>
-                                ${statusHtml}
-                            </div>
-                        </div>
-                    `;
+                            <div class="fleet-header"><div class="fleet-name"><i class="fa-solid fa-truck"></i> ${f.nombre}</div><div class="fleet-trip">Viaje ${f.viaje_actual}</div></div>
+                            <div class="inventory-bar"><div class="${barClass}" style="width: ${porcentaje}%"></div></div>
+                            <div class="fleet-footer"><span>${f.stock_actual} / ${f.capacidad_maxima} Botellones</span>${statusHtml}</div>
+                        </div>`;
                 });
             } catch (error) {
-                console.error("Error cargando flota:", error);
-                document.getElementById('fleet-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando datos de flota. Revisa la consola o las políticas RLS.</div>`;
+                document.getElementById('fleet-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando datos.</div>`;
             }
         }
 
-        // Cargar Entregas, KPIs y Gráfico
         async function fetchEntregas() {
             try {
-                // Hacemos un join con flota para obtener el nombre de la camioneta
-                const { data: entregas, error } = await supabaseClient
-                    .from('entregas')
-                    .select(`
-                        id, cliente, unidades, metodo_pago, total, created_at,
-                        flota ( nombre )
-                    `)
-                    .order('created_at', { ascending: false });
-
+                const { data: entregas, error } = await supabaseClient.from('entregas').select(`id, cliente, unidades, metodo_pago, total, created_at, flota ( nombre )`).order('created_at', { ascending: false });
                 if (error) throw error;
-
-                // 1. Calcular KPIs
-                let totalIngresos = 0; 
-                let totalUnidades = 0;
-                
-                entregas.forEach(e => { 
-                    totalIngresos += Number(e.total); 
-                    totalUnidades += Number(e.unidades); 
-                });
-
+                let totalIngresos = 0, totalUnidades = 0;
+                entregas.forEach(e => { totalIngresos += Number(e.total); totalUnidades += Number(e.unidades); });
                 document.getElementById('kpi-ingresos').innerText = fmtBs(totalIngresos);
                 document.getElementById('kpi-entregas').innerText = entregas.length;
                 document.getElementById('kpi-unidades').innerText = totalUnidades;
+                document.getElementById('chart-avg').innerText = fmtBs(entregas.length > 0 ? (totalIngresos / entregas.length) : 0);
                 
-                const avg = entregas.length > 0 ? (totalIngresos / entregas.length) : 0;
-                document.getElementById('chart-avg').innerText = fmtBs(avg);
-
-                // 2. Renderizar Lista de Entregas
                 const listContainer = document.getElementById('delivery-list');
-                listContainer.innerHTML = ''; // Limpiar loader
-
-                if (entregas.length === 0) {
-                    listContainer.innerHTML = `<div class="loading-text">No hay entregas registradas aún.</div>`;
-                }
-
+                listContainer.innerHTML = entregas.length === 0 ? `<div class="loading-text">No hay entregas registradas aún.</div>` : '';
+                
                 entregas.forEach(e => {
-                    // Asignar color al método de pago
-                    let payClass = 'pay-efectivo';
-                    const metodo = (e.metodo_pago || '').toLowerCase();
-                    if (metodo.includes('qr')) payClass = 'pay-qr';
-                    else if (metodo.includes('crédito') || metodo.includes('credito')) payClass = 'pay-credito';
-                    else if (metodo.includes('transferencia')) payClass = 'pay-transferencia';
-
-                    const nombreFlota = e.flota ? e.flota.nombre : 'Flota Desconocida';
-                    const horaFormat = formatTime(e.created_at);
-
+                    let payClass = 'pay-efectivo'; const metodo = (e.metodo_pago || '').toLowerCase();
+                    if (metodo.includes('qr')) payClass = 'pay-qr'; else if (metodo.includes('crédito')) payClass = 'pay-credito'; else if (metodo.includes('transferencia')) payClass = 'pay-transferencia';
+                    const nombreFlota = e.flota ? e.flota.nombre : 'Desconocida';
+                    
                     listContainer.innerHTML += `
                         <div class="delivery-item">
-                            <div class="delivery-left">
-                                <div class="truck-avatar"><i class="fa-solid fa-truck-droplet"></i></div>
+                            <div class="delivery-left"><div class="truck-avatar"><i class="fa-solid fa-truck-droplet"></i></div>
+                                <div><div class="delivery-client">${e.cliente}</div><div class="delivery-meta-sub"><span><i class="fa-regular fa-clock"></i> ${formatTime(e.created_at)}</span> • <span>${nombreFlota}</span></div></div>
+                            </div>
+                            <div class="delivery-right"><div class="delivery-price">${fmtBs(e.total)}</div><span class="payment-pill ${payClass}">${e.metodo_pago} (${e.unidades} u.)</span></div>
+                        </div>`;
+                });
+                updateChart(entregas);
+            } catch (error) { console.error(error); }
+        }
+
+        function updateChart(entregas) {
+            const entregasCrono = [...entregas].reverse();
+            let labels = [], dataPoints = [], acumulado = 0;
+            entregasCrono.forEach(e => { acumulado += Number(e.total); labels.push(formatTime(e.created_at)); dataPoints.push(acumulado); });
+            if(labels.length > 0) document.getElementById('chart-peak').innerText = labels[Math.floor(labels.length / 2)] + " aprox";
+            const ctx = document.getElementById('fluidChart').getContext('2d');
+            if (fluidChartInstance) fluidChartInstance.destroy();
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 200); gradientFill.addColorStop(0, 'rgba(2, 132, 199, 0.35)'); gradientFill.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
+            fluidChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels.length > 0 ? labels : ['08:00', '10:00', '12:00'], datasets: [{ data: dataPoints.length > 0 ? dataPoints : [0, 0, 0], borderColor: '#0284c7', borderWidth: 3, pointBackgroundColor: '#ffffff', pointBorderColor: '#0284c7', pointBorderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.42, fill: true, backgroundColor: gradientFill }] },
+                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' }, bodyFont: { family: 'Plus Jakarta Sans', size: 12 }, padding: 10, cornerRadius: 8, displayColors: false, callbacks: { label: (context) => ` Acumulado: Bs. ${context.raw.toLocaleString('es-BO')}` } } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' }, callback: (v) => 'Bs.' + v } }, x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' } } } }
+            });
+        }
+
+        // --- NUEVAS FUNCIONES PARA CHOFERES ---
+        async function fetchChoferes() {
+            try {
+                const { data: choferes, error } = await supabaseClient.from('choferes').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                const listContainer = document.getElementById('driver-list');
+                listContainer.innerHTML = '';
+                
+                if (choferes.length === 0) {
+                    listContainer.innerHTML = `<div class="loading-text">No hay choferes registrados en el equipo.</div>`;
+                    return;
+                }
+
+                choferes.forEach(c => {
+                    listContainer.innerHTML += `
+                        <div class="driver-item">
+                            <div class="driver-info">
+                                <div class="driver-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
                                 <div>
-                                    <div class="delivery-client">${e.cliente}</div>
-                                    <div class="delivery-meta-sub">
-                                        <span><i class="fa-regular fa-clock"></i> ${horaFormat}</span> • <span>${nombreFlota}</span>
-                                    </div>
+                                    <div class="driver-name">${c.nombre}</div>
+                                    <div class="driver-tel"><i class="fa-solid fa-phone" style="font-size: 0.65rem;"></i> ${c.telefono || 'No registrado'}</div>
                                 </div>
                             </div>
-                            <div class="delivery-right">
-                                <div class="delivery-price">${fmtBs(e.total)}</div>
-                                <span class="payment-pill ${payClass}">${e.metodo_pago} (${e.unidades} u.)</span>
-                            </div>
+                            <div class="driver-status">${c.estado}</div>
                         </div>
                     `;
                 });
-
-                // 3. Preparar datos para el Gráfico
-                updateChart(entregas);
-
             } catch (error) {
-                console.error("Error cargando entregas:", error);
-                document.getElementById('delivery-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando entregas. Revisa la consola o las políticas RLS.</div>`;
+                console.error("Error cargando choferes:", error);
+                document.getElementById('driver-list').innerHTML = `<div class="loading-text" style="color:red;">Error al cargar choferes.</div>`;
             }
         }
 
-        // Función para procesar y actualizar el Gráfico de Chart.js
-        function updateChart(entregas) {
-            // Agrupar ventas acumuladas o por despacho (orden cronológico)
-            // Para el flujo visualizamos las entregas de la más antigua a la más nueva
-            const entregasCrono = [...entregas].reverse();
+        // Lógica del formulario para agregar un nuevo chofer
+        document.getElementById('form-chofer').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            let labels = [];
-            let dataPoints = [];
-            let acumulado = 0;
-
-            entregasCrono.forEach(e => {
-                acumulado += Number(e.total);
-                labels.push(formatTime(e.created_at));
-                dataPoints.push(acumulado);
-            });
-
-            // Si hay datos, estimar hora pico visualmente
-            if(labels.length > 0) {
-                document.getElementById('chart-peak').innerText = labels[Math.floor(labels.length / 2)] + " aprox";
-            }
-
-            const ctx = document.getElementById('fluidChart').getContext('2d');
+            const btn = document.getElementById('btn-submit-chofer');
+            const nombreInput = document.getElementById('chofer-nombre');
+            const telInput = document.getElementById('chofer-telefono');
             
-            // Si el gráfico ya existe, lo destruimos para redibujarlo
-            if (fluidChartInstance) {
-                fluidChartInstance.destroy();
+            // Estado visual de carga
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('choferes')
+                    .insert([{ 
+                        nombre: nombreInput.value.trim(), 
+                        telefono: telInput.value.trim() 
+                    }]);
+                
+                if (error) throw error;
+                
+                // Limpiar formulario y recargar lista
+                nombreInput.value = '';
+                telInput.value = '';
+                await fetchChoferes();
+                
+            } catch (error) {
+                alert("Hubo un error al guardar el chofer. Revisa la consola para más detalles.");
+                console.error(error);
+            } finally {
+                // Restaurar botón
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Agregar Chofer';
+                btn.disabled = false;
             }
+        });
 
-            const gradientFill = ctx.createLinearGradient(0, 0, 0, 200);
-            gradientFill.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
-            gradientFill.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
-
-            fluidChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.length > 0 ? labels : ['08:00', '10:00', '12:00'],
-                    datasets: [{
-                        label: 'Ventas Acumuladas',
-                        data: dataPoints.length > 0 ? dataPoints : [0, 0, 0],
-                        borderColor: '#0284c7', borderWidth: 3,
-                        pointBackgroundColor: '#ffffff', pointBorderColor: '#0284c7', pointBorderWidth: 2.5,
-                        pointRadius: 4, pointHoverRadius: 6,
-                        tension: 0.42, fill: true, backgroundColor: gradientFill
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#0f172a',
-                            titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
-                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
-                            padding: 10, cornerRadius: 8, displayColors: false,
-                            callbacks: { label: (context) => ` Acumulado: Bs. ${context.raw.toLocaleString('es-BO')}` }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' }, callback: (v) => 'Bs.' + v } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' } } }
-                    }
-                }
-            });
-        }
-
-        // Ejecutar funciones al cargar
+        // Cargar todo al iniciar
         document.addEventListener('DOMContentLoaded', () => {
             initScrollAnimations();
             fetchFlota();
             fetchEntregas();
-            
-            // Opcional: Refrescar datos automáticamente cada 30 segundos
-            // setInterval(() => { fetchFlota(); fetchEntregas(); }, 30000);
+            fetchChoferes(); // Cargamos la lista de personal
         });
     </script>
 </body>
