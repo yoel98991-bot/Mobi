@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Mobi - Pasajero (Con Rutas Reales)</title>
+  <title>Mobi - Pasajero (Ruta Animada en Tiempo Real)</title>
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
@@ -82,6 +82,7 @@
       border-radius: 50%; display: flex; justify-content: center;
       align-items: center; border: 3px solid var(--white);
       box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      transition: all 0.1s linear; /* Suavidad en el movimiento */
     }
     .custom-pin::after {
       content: ''; width: 6px; height: 6px;
@@ -165,7 +166,7 @@
       background: var(--primary); color: var(--text-dark); border: none;
       width: 100%; padding: 0.85rem; border-radius: 14px; font-size: 1.1rem;
       font-weight: 700; cursor: pointer; display: flex; justify-content: center;
-      align-items: center; gap: 0.5rem; transition: 0.1s; margin-top: 0.2rem;
+      align-items: center; gap: 0.5rem; transition: 0.3s; margin-top: 0.2rem;
     }
     .btn-request:active { transform: scale(0.98); }
     .hidden { display: none !important; }
@@ -224,14 +225,18 @@
       </div>
 
       <div class="ride-options" id="ride-options-container">
+        
+        <!-- MODO MOBI COMFORT -->
         <div class="ride-card active" data-type="comfort" data-price="12.50">
-          <div class="car-img-placeholder" style="background-image: url('');"></div>
+          <div class="car-img-placeholder" style="background-image: url('https://i.ibb.co/4g4YwfGV/1785764572855.png');"></div>
           <div class="ride-details">
             <div class="ride-title">Mobi Comfort</div>
             <div class="ride-desc">Viajes cómodos y seguros</div>
           </div>
           <div class="ride-price">S/ 12.50</div>
         </div>
+        
+        <!-- MODO MOBI PLUS (A espera de tu imagen) -->
         <div class="ride-card" data-type="plus" data-price="18.00">
           <div class="car-img-placeholder" style="background-image: url('');"></div>
           <div class="ride-details">
@@ -261,7 +266,10 @@
     let map, passengerMarker, destinationMarker, routeLine;
     let currentLat = -12.0863, currentLng = -77.0343; // Coordenadas por defecto
     let destLat = null, destLng = null;
+    
     let isSelectingDestination = false;
+    let isRideActive = false;
+    let fullRouteCoords = []; // Guardará las coordenadas para animar el viaje
 
     const centerPin = document.getElementById('center-pin');
     const btnConfirmMap = document.getElementById('btn-confirm-dest');
@@ -307,40 +315,41 @@
       }
     }
 
-    // 3. NUEVO: Función para trazar la ruta real por calles (API OSRM)
+    // 3. Trazar ruta y extraer coordenadas para la animación
     async function drawRealRoute(lat1, lng1, lat2, lng2) {
       try {
-        // OSRM requiere las coordenadas en formato longitud,latitud
         const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&overview=full`;
-        
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.routes && data.routes.length > 0) {
-          const routeGeoJSON = data.routes[0].geometry;
+          // Extraer coordenadas de OSRM ([longitud, latitud]) y pasar a Leaflet ([latitud, longitud])
+          const routeGeoJSON = data.routes[0].geometry.coordinates;
+          fullRouteCoords = routeGeoJSON.map(coord => [coord[1], coord[0]]);
 
-          // Dibujar la ruta usando GeoJSON devuelto por la API
-          routeLine = L.geoJSON(routeGeoJSON, {
-            style: {
-              color: '#1C1C1C', // Color de la línea de la ruta
-              weight: 5,        // Grosor
-              opacity: 0.8
-            }
+          if(routeLine) map.removeLayer(routeLine);
+          
+          // Usamos L.polyline en vez de GeoJSON para poder editar la línea en tiempo real
+          routeLine = L.polyline(fullRouteCoords, {
+            color: '#1C1C1C',
+            weight: 5,
+            opacity: 0.8
           }).addTo(map);
 
-          // Ajustar la cámara del mapa para que se vea toda la ruta
           map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
         }
       } catch (e) {
-        console.error("Error obteniendo la ruta por calles:", e);
-        // Fallback: Si falla la API (sin internet o límite alcanzado), dibuja la línea recta
-        routeLine = L.polyline([[lat1, lng1], [lat2, lng2]], { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
+        console.error("Error obteniendo la ruta", e);
+        fullRouteCoords = [[lat1, lng1], [lat2, lng2]]; // Fallback línea recta
+        routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
         map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
       }
     }
 
-    // 4. Activar Modo "Seleccionar Destino"
+    // 4. Iniciar Selección de Destino
     dropoffRow.addEventListener('click', () => {
+      if(isRideActive) return; // Bloquear si el viaje está en curso
+      
       isSelectingDestination = true;
       rideOptionsContainer.classList.add('hidden');
       btnRequestRide.classList.add('hidden');
@@ -354,39 +363,129 @@
 
       if(destinationMarker) map.removeLayer(destinationMarker);
       if(routeLine) map.removeLayer(routeLine);
+      fullRouteCoords = [];
     });
 
-    // 5. Confirmar Destino y Generar Ruta
+    // 5. Confirmar Destino
     btnConfirmMap.addEventListener('click', async () => {
       isSelectingDestination = false;
       const center = map.getCenter();
       destLat = center.lat;
       destLng = center.lng;
 
-      // Volver UI a la normalidad
       centerPin.style.display = 'none';
       btnConfirmMap.style.display = 'none';
       rideOptionsContainer.classList.remove('hidden');
       btnRequestRide.classList.remove('hidden');
       locateBtn.style.bottom = '20px';
 
-      // Dibujar marcador de destino
       const destHtml = `<div class="custom-pin" style="background: #1C1C1C; border-color: #FFD700;"></div>`;
       destinationMarker = L.marker([destLat, destLng], { 
         icon: L.divIcon({ className: '', html: destHtml, iconSize: [20, 20], iconAnchor: [10, 10] }) 
       }).addTo(map);
 
-      // Feedback visual mientras carga la ruta
-      const btnOriginalHtml = btnRequestRide.innerHTML;
       btnRequestRide.innerHTML = 'Calculando ruta... ⏳';
       btnRequestRide.style.background = '#e5c100';
+      btnRequestRide.style.pointerEvents = 'none';
 
-      // Ejecutar la función de ruta real
       await drawRealRoute(currentLat, currentLng, destLat, destLng);
 
-      // Restaurar el botón
-      btnRequestRide.innerHTML = btnOriginalHtml;
+      btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
       btnRequestRide.style.background = 'var(--primary)';
+      btnRequestRide.style.pointerEvents = 'auto';
+    });
+
+    // 6. ANIMACIÓN: Simular el Viaje Real
+    function startRideSimulation(coords) {
+      isRideActive = true;
+      
+      let index = 0;
+      let progress = 0;
+      const metersPerFrame = 4; // Ajusta la velocidad visual (4 = velocidad media agradable)
+      
+      function animate() {
+        if (index >= coords.length - 1) {
+          finishRide();
+          return;
+        }
+        
+        const p1 = L.latLng(coords[index]);
+        const p2 = L.latLng(coords[index + 1]);
+        const dist = p1.distanceTo(p2); // Distancia en metros
+        
+        // Calcular velocidad constante basada en la distancia entre nodos
+        if (dist === 0 || progress >= 1) {
+          progress = 0;
+          index++;
+          requestAnimationFrame(animate);
+          return;
+        }
+        
+        const frameSpeed = dist > 0 ? (metersPerFrame / dist) : 1;
+        progress += frameSpeed;
+        const safeProgress = Math.min(progress, 1);
+        
+        // Interpolar posición
+        const lat = p1.lat + (p2.lat - p1.lat) * safeProgress;
+        const lng = p1.lng + (p2.lng - p1.lng) * safeProgress;
+        
+        // 1. Mover el pin del pasajero
+        passengerMarker.setLatLng([lat, lng]);
+        
+        // 2. Centrar cámara siguiéndolo suavemente
+        map.setView([lat, lng], map.getZoom(), { animate: false });
+        
+        // 3. ACTUALIZAR RUTA: Borra la línea que queda atrás
+        if (routeLine) {
+          const remainingPath = [[lat, lng], ...coords.slice(index + 1)];
+          routeLine.setLatLngs(remainingPath);
+        }
+        
+        requestAnimationFrame(animate);
+      }
+      
+      animate();
+    }
+
+    function finishRide() {
+      isRideActive = false;
+      btnRequestRide.innerHTML = '¡Llegaste a tu destino! 🎉';
+      btnRequestRide.style.background = '#4CAF50';
+      btnRequestRide.style.color = '#fff';
+      
+      // Reiniciar estado después de unos segundos
+      setTimeout(() => {
+        btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        btnRequestRide.style.background = 'var(--primary)';
+        btnRequestRide.style.color = 'var(--text-dark)';
+        btnRequestRide.style.pointerEvents = 'auto';
+        
+        fullRouteCoords = [];
+        if(routeLine) map.removeLayer(routeLine);
+        if(destinationMarker) map.removeLayer(destinationMarker);
+        
+        document.getElementById('display-dropoff').textContent = '¿A dónde vas?';
+        document.getElementById('display-dropoff-sub').textContent = 'Toca para buscar destino en el mapa';
+        
+        // Actualizar currentLat y currentLng al punto final
+        currentLat = destLat;
+        currentLng = destLng;
+      }, 4000);
+    }
+
+    // Evento de Pedir Viaje
+    btnRequestRide.addEventListener('click', () => {
+      if(fullRouteCoords.length > 0 && !isRideActive) {
+        btnRequestRide.innerHTML = 'Viaje en curso... 🚗';
+        btnRequestRide.style.background = '#1C1C1C';
+        btnRequestRide.style.color = '#FFD700';
+        btnRequestRide.style.pointerEvents = 'none'; // Bloquear botón
+        
+        // Iniciar la magia
+        startRideSimulation(fullRouteCoords);
+      } else if (fullRouteCoords.length === 0) {
+        alert("Selecciona tu destino en el mapa primero.");
+      }
     });
 
     // Selección de Vehículo
@@ -414,7 +513,7 @@
           },
           (err) => {
             if (!map) initMap(currentLat, currentLng);
-          }, { enableHighAccuracy: true }
+          }
         );
       } else {
         if (!map) initMap(currentLat, currentLng);
