@@ -132,7 +132,7 @@
         
         .btn-primary { width: 100%; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s; }
         .btn-primary:active { opacity: 0.8; }
-        .btn-secondary { background: #10b981; } /* Color verde para diferenciar despachos */
+        .btn-secondary { background: #10b981; }
 
         /* --- LISTA DE DESPACHOS --- */
         .delivery-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
@@ -307,9 +307,6 @@
     </main>
 
     <script>
-        // ==========================================
-        // 1. CONFIGURACIÓN INICIAL
-        // ==========================================
         const { createClient } = supabase;
         const supabaseUrl = 'https://dyodvgdmsrsdwcgjlitv.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5b2R2Z2Rtc3JzZHdjZ2psaXR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODM0MTYsImV4cCI6MjEwMTM1OTQxNn0.2Q_IUGGfnWytGCv01xVhiCYPPpSolGwEvly2Pp5KOKE';
@@ -317,14 +314,11 @@
 
         let fluidChartInstance = null;
         
-        // Utilidades
         const fmtBs = (val) => `Bs. ${Number(val).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         const formatTime = (dateString) => new Date(dateString).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 
-        // Mostrar Fecha Actual
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
 
-        // Animaciones de Scroll
         const initScrollAnimations = () => {
             const sections = document.querySelectorAll('.fade-in-section');
             const observer = new IntersectionObserver((entries) => {
@@ -338,31 +332,20 @@
             sections.forEach(s => observer.observe(s));
         };
 
-        // ==========================================
-        // 2. OBTENCIÓN DE DATOS (READ)
-        // ==========================================
-
-        // Cargar Lista de Choferes para el Formulario de Despacho
+        // Cargar Lista de Choferes
         async function fetchChoferesDropdown() {
             try {
-                const { data: choferes, error } = await supabaseClient
-                    .from('choferes')
-                    .select('id, nombre, placa')
-                    .order('nombre');
-                
+                const { data: choferes, error } = await supabaseClient.from('choferes').select('id, nombre, placa').order('nombre');
                 if (error) throw error;
-                
                 const select = document.getElementById('flota-chofer-select');
                 select.innerHTML = '<option value="">Selecciona un chofer...</option>';
                 choferes.forEach(c => {
                     select.innerHTML += `<option value="${c.id}">${c.nombre} (Placa: ${c.placa || 'N/A'})</option>`;
                 });
-            } catch (error) {
-                console.error("Error cargando choferes:", error);
-            }
+            } catch (error) { console.error("Error cargando choferes:", error); }
         }
 
-        // Cargar Inventario de Flotas en Ruta
+        // Cargar Inventario de Flotas en Ruta (Con soporte de estado en tiempo real)
         async function fetchFlota() {
             try {
                 const { data: flotaData, error } = await supabaseClient
@@ -377,11 +360,14 @@
                 
                 if(flotaData.length === 0) {
                     fleetContainer.innerHTML = '<div class="loading-text">No hay unidades en ruta en este momento.</div>';
+                    return;
                 }
 
                 flotaData.forEach(f => {
                     const porcentaje = Math.max(0, Math.min(100, (f.stock_actual / f.capacidad_maxima) * 100));
                     const barClass = porcentaje < 25 ? 'inventory-fill low' : 'inventory-fill';
+                    
+                    // Aquí leemos correctamente el estado dinámico enviado por el chofer
                     let statusHtml = f.estado === 'ruta' 
                         ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>` 
                         : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
@@ -407,13 +393,10 @@
                             </div>
                         </div>`;
                 });
-            } catch (error) {
-                document.getElementById('fleet-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando flota.</div>`;
-                console.error(error);
-            }
+            } catch (error) { console.error("Error cargando flota:", error); }
         }
 
-        // Cargar Entregas, Calcular KPIs y Dibujar Gráfico
+        // Cargar Entregas, KPIs y Gráfico
         async function fetchEntregas() {
             try {
                 const { data: entregas, error } = await supabaseClient
@@ -429,13 +412,11 @@
                     totalUnidades += Number(e.unidades); 
                 });
                 
-                // Actualizar KPIs
                 document.getElementById('kpi-ingresos').innerText = fmtBs(totalIngresos);
                 document.getElementById('kpi-entregas').innerText = entregas.length;
                 document.getElementById('kpi-unidades').innerText = totalUnidades;
                 document.getElementById('chart-avg').innerText = fmtBs(entregas.length > 0 ? (totalIngresos / entregas.length) : 0);
                 
-                // Renderizar Lista
                 const listContainer = document.getElementById('delivery-list');
                 listContainer.innerHTML = entregas.length === 0 ? `<div class="loading-text">No hay entregas registradas hoy.</div>` : '';
                 
@@ -466,16 +447,10 @@
                         </div>`;
                 });
 
-                // Actualizar Gráfico
                 updateChart(entregas);
-
-            } catch (error) {
-                console.error(error);
-                document.getElementById('delivery-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando entregas.</div>`;
-            }
+            } catch (error) { console.error("Error cargando entregas:", error); }
         }
 
-        // Lógica del Gráfico Chart.js
         function updateChart(entregas) {
             const entregasCrono = [...entregas].reverse();
             let labels = [], dataPoints = [], acumulado = 0;
@@ -527,37 +502,25 @@
             });
         }
 
-        // ==========================================
-        // 3. ENVÍO DE FORMULARIOS (WRITE)
-        // ==========================================
-
-        // Registrar Nuevo Chofer
+        // Formularios (Chofer y Flota)
         document.getElementById('form-chofer').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit-chofer');
             const nombre = document.getElementById('chofer-nombre').value.trim();
             const placa = document.getElementById('chofer-placa').value.trim();
             
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...'; 
-            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...'; btn.disabled = true;
 
             try {
                 const { error } = await supabaseClient.from('choferes').insert([{ nombre, placa }]);
                 if (error) throw error;
-                
                 document.getElementById('form-chofer').reset();
-                await fetchChoferesDropdown(); // Actualiza el select de despachos
+                await fetchChoferesDropdown();
                 alert(`Chofer ${nombre} registrado correctamente.`);
-            } catch (error) {
-                console.error(error);
-                alert("Error al guardar chofer.");
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Chofer'; 
-                btn.disabled = false;
-            }
+            } catch (error) { alert("Error al guardar chofer."); } 
+            finally { btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Chofer'; btn.disabled = false; }
         });
 
-        // Despachar Flota a la Ruta
         document.getElementById('form-flota').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit-flota');
@@ -567,40 +530,34 @@
             
             if(!chofer_id) return alert("Selecciona un chofer primero");
 
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Despachando...'; 
-            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Despachando...'; btn.disabled = true;
 
             try {
                 const { error } = await supabaseClient.from('flota').insert([{ 
-                    chofer_id: chofer_id,
-                    nombre: ruta,
-                    capacidad_maxima: capacidad,
-                    stock_actual: capacidad, // El stock inicial es la capacidad máxima
-                    estado: 'ruta'
+                    chofer_id: chofer_id, nombre: ruta, capacidad_maxima: capacidad, stock_actual: capacidad, estado: 'ruta'
                 }]);
-                
                 if (error) throw error;
-                
                 document.getElementById('form-flota').reset();
-                await fetchFlota(); // Refresca la lista de inventario visual
+                await fetchFlota();
                 alert(`Unidad despachada a ${ruta} exitosamente.`);
-            } catch (error) {
-                console.error(error);
-                alert("Error al despachar unidad.");
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Iniciar Ruta'; 
-                btn.disabled = false;
-            }
+            } catch (error) { alert("Error al despachar unidad."); } 
+            finally { btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Iniciar Ruta'; btn.disabled = false; }
         });
 
         // ==========================================
-        // 4. INICIALIZACIÓN
+        // INICIALIZACIÓN Y REFRESCO EN TIEMPO REAL
         // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
             initScrollAnimations();
             fetchChoferesDropdown();
             fetchFlota();
             fetchEntregas();
+
+            // Sincronización automática: actualiza la flota y entregas cada 5 segundos
+            setInterval(() => {
+                fetchFlota();
+                fetchEntregas();
+            }, 5000);
         });
     </script>
 </body>
