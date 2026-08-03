@@ -1,528 +1,475 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Mobi - Pasajero (Ruta Animada en Tiempo Real)</title>
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <style>
-    :root {
-      --primary: #FFD700;
-      --bg-light: #F9F9F9;
-      --white: #FFFFFF;
-      --text-dark: #1C1C1C;
-      --text-muted: #888888;
-      --border-color: #EEEEEE;
-      --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
-      --shadow-md: 0 -4px 20px rgba(0,0,0,0.08);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AquaVita - Panel Gerencial Completo</title>
+    <!-- FontAwesome & Chart.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    body {
-      background: #E5E5E5;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      color: var(--text-dark);
-    }
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    .app-container {
-      width: 100%;
-      max-width: 420px;
-      height: 100vh;
-      max-height: 900px;
-      background: var(--bg-light);
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-    }
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --surface: #ffffff;
+            --surface-subtle: #f1f5f9;
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --primary-light: #e0f2fe;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
 
-    /* HEADER */
-    .header {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem 1.2rem;
-      z-index: 1000;
-      pointer-events: none;
-    }
-    .header .logo { height: 35px; pointer-events: auto; }
-    .btn-rewards {
-      background: var(--white); border: 1px solid var(--border-color);
-      padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;
-      font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;
-      box-shadow: var(--shadow-sm); pointer-events: auto;
-    }
-    .btn-rewards svg { width: 16px; height: 16px; fill: var(--primary); }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-    /* MAPA */
-    .map-section { flex: 1; position: relative; min-height: 35vh; }
-    #map { width: 100%; height: 100%; z-index: 1; }
-    
-    .locate-btn {
-      position: absolute; bottom: 20px; right: 15px; width: 45px; height: 45px;
-      background: var(--white); border-radius: 50%; display: flex;
-      justify-content: center; align-items: center; box-shadow: var(--shadow-sm);
-      border: none; z-index: 999; cursor: pointer; transition: 0.2s;
-    }
-    .locate-btn svg { width: 20px; height: 20px; fill: var(--text-dark); }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.4;
+            padding-bottom: 50px;
+        }
 
-    /* PIN DE INICIO Y DESTINO */
-    .custom-pin {
-      background: var(--text-dark); width: 20px; height: 20px;
-      border-radius: 50%; display: flex; justify-content: center;
-      align-items: center; border: 3px solid var(--white);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-      transition: all 0.1s linear; /* Suavidad en el movimiento */
-    }
-    .custom-pin::after {
-      content: ''; width: 6px; height: 6px;
-      background: var(--primary); border-radius: 50%;
-    }
+        /* --- ANIMACIONES --- */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
 
-    /* PIN CENTRAL FIJO PARA SELECCIONAR DESTINO */
-    .center-fixed-pin {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -100%);
-      z-index: 1000;
-      pointer-events: none;
-      display: none; 
-      flex-direction: column;
-      align-items: center;
-    }
-    .pin-head {
-      width: 30px; height: 30px; background: var(--text-dark);
-      border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-      display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    .pin-head::after {
-      content: ''; width: 10px; height: 10px;
-      background: var(--primary); border-radius: 50%;
-    }
-    .pin-shadow {
-      width: 12px; height: 4px; background: rgba(0,0,0,0.3);
-      border-radius: 50%; margin-top: 5px;
-    }
-    .center-fixed-pin.moving .pin-head { transform: translateY(-10px) rotate(-45deg); transition: 0.2s; }
-    .center-fixed-pin.moving .pin-shadow { transform: scale(0.5); transition: 0.2s; }
+        /* --- HEADER --- */
+        header {
+            background-color: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(12px);
+            color: var(--surface);
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0284c7);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 0.9rem;
+        }
+        .live-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.7rem;
+            font-weight: 700; padding: 4px 10px; border-radius: 20px;
+        }
+        .pulse-dot {
+            width: 6px; height: 6px; background-color: #34d399; border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
 
-    /* BOTÓN FLOTANTE CONFIRMAR DESTINO */
-    .btn-confirm-map {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--text-dark); color: var(--primary);
-      border: none; padding: 0.8rem 1.5rem; border-radius: 20px;
-      font-weight: 700; font-size: 1rem; box-shadow: var(--shadow-md);
-      z-index: 999; display: none; cursor: pointer; white-space: nowrap;
-    }
+        /* --- LAYOUT PRINCIPAL --- */
+        main { padding: 1.25rem; max-width: 500px; margin: 0 auto; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; }
+        .section-title { font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .section-badge { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
 
-    /* BOTTOM SHEET */
-    .bottom-sheet {
-      background: var(--bg-light); border-top-left-radius: 25px;
-      border-top-right-radius: 25px; padding: 1.2rem 1.2rem 85px 1.2rem;
-      z-index: 1000; box-shadow: var(--shadow-md); display: flex;
-      flex-direction: column; gap: 0.8rem; position: relative;
-      margin-top: -20px; overflow: hidden;
-    }
+        /* --- KPIS --- */
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
+        .kpi-card.featured { grid-column: span 2; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border: none; }
+        .kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .kpi-title { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .kpi-card.featured .kpi-title { color: #94a3b8; }
+        .kpi-icon-wrapper { width: 32px; height: 32px; border-radius: 8px; background-color: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+        .kpi-card.featured .kpi-icon-wrapper { background-color: rgba(255, 255, 255, 0.1); color: #38bdf8; }
+        .kpi-value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+        .kpi-card.featured .kpi-value { font-size: 1.8rem; }
+        .kpi-trend { margin-top: 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background-color: var(--success-light); color: var(--success); }
+        .kpi-card.featured .kpi-trend { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
 
-    .location-card { background: var(--white); border-radius: 16px; padding: 0.3rem 1rem; box-shadow: var(--shadow-sm); }
-    .input-row { display: flex; align-items: center; padding: 0.6rem 0; gap: 1rem; cursor: pointer; }
-    .input-row:first-child { border-bottom: 1px solid var(--border-color); }
-    
-    .dot-icon { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .dot-yellow { background: var(--primary); }
-    .dot-black { background: var(--text-dark); }
+        /* --- ALMACENES MÓVILES --- */
+        .fleet-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
+        .fleet-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
+        .fleet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .fleet-name { font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .fleet-trip { background-color: var(--primary-light); color: var(--primary-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; }
+        
+        .inventory-bar { width: 100%; height: 10px; background-color: var(--surface-subtle); border-radius: 5px; overflow: hidden; margin: 10px 0; }
+        .inventory-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); border-radius: 5px; transition: width 0.8s ease; }
+        .inventory-fill.low { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        
+        .fleet-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+        .status-ruta { color: var(--warning); display: flex; align-items: center; gap: 4px; }
+        .status-planta { color: var(--success); display: flex; align-items: center; gap: 4px; }
+        .status-planta i { animation: fa-spin 2s linear infinite; }
 
-    .address-info { flex: 1; overflow: hidden; }
-    .address-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .address-sub { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* Opciones Viaje */
-    .ride-options { display: flex; flex-direction: column; gap: 0.4rem; }
-    .ride-card {
-      background: var(--white); border: 2px solid transparent;
-      border-radius: 14px; padding: 0.6rem 0.8rem; display: flex;
-      align-items: center; gap: 1rem; cursor: pointer; transition: 0.2s;
-    }
-    .ride-card.active { background: #FFFDF0; border-color: var(--primary); }
-    .car-img-placeholder { width: 55px; height: 35px; background-size: contain; background-repeat: no-repeat; background-position: center; }
-    .ride-details { flex: 1; }
-    .ride-title { font-weight: 700; font-size: 1rem; }
-    .ride-desc { font-size: 0.75rem; color: var(--text-muted); }
-    .ride-price { font-weight: 800; font-size: 1rem; text-align: right;}
-    
-    /* Botón Pedir */
-    .btn-request {
-      background: var(--primary); color: var(--text-dark); border: none;
-      width: 100%; padding: 0.85rem; border-radius: 14px; font-size: 1.1rem;
-      font-weight: 700; cursor: pointer; display: flex; justify-content: center;
-      align-items: center; gap: 0.5rem; transition: 0.3s; margin-top: 0.2rem;
-    }
-    .btn-request:active { transform: scale(0.98); }
-    .hidden { display: none !important; }
-
-    /* NAVBAR INFERIOR */
-    .bottom-nav {
-      position: absolute; bottom: 0; left: 0; right: 0; background: var(--white);
-      display: flex; justify-content: space-between; padding: 0.6rem 1.5rem 1.2rem 1.5rem;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.03); z-index: 1001; border-top: 1px solid var(--border-color);
-    }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; color: var(--text-muted); font-size: 0.7rem; text-decoration: none; }
-    .nav-item svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; fill: none; }
-    .nav-item.active { color: var(--text-dark); font-weight: 600; }
-    .nav-item.active svg { stroke: var(--primary); fill: var(--primary); }
-
-  </style>
+        /* --- GRÁFICO FLUIDO --- */
+        .chart-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+        .chart-header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); }
+        .chart-stat-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .chart-stat-val { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
+        .chart-container { position: relative; height: 220px; width: 100%; }
+        
+        /* --- LISTA DE DESPACHOS --- */
+        .delivery-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+        .delivery-item { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+        .delivery-left { display: flex; align-items: center; gap: 12px; }
+        .truck-avatar { width: 38px; height: 38px; border-radius: 10px; background-color: var(--surface-subtle); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary-dark); font-size: 0.9rem; }
+        .delivery-client { font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+        .delivery-meta-sub { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .delivery-right { text-align: right; }
+        .delivery-price { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
+        
+        .payment-pill { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; display: inline-block; margin-top: 3px; }
+        .pay-efectivo { background: #dcfce7; color: #15803d; }
+        .pay-qr { background: #e0f2fe; color: #0369a1; }
+        .pay-credito { background: #fef3c7; color: #b45309; }
+        .pay-transferencia { background: #f3e8ff; color: #7e22ce; }
+        
+        /* Loading States */
+        .loading-text { text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 20px; }
+    </style>
 </head>
 <body>
 
-  <div class="app-container">
-    
-    <div class="header">
-      <img src="https://i.ibb.co/SXFXKTsk/20260803-012907-0000.png" alt="Mobi" class="logo">
-      <button class="btn-rewards"><svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.5-.5-.5A2.996 2.996 0 0 0 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 9.06v.94h2V9.06L15.38 12 17 10.83 14.92 8H20v6z"/></svg> Gana viajes</button>
-    </div>
+    <header>
+        <div class="logo"><div class="logo-icon"><i class="fa-solid fa-droplet"></i></div>AQUAVITA</div>
+        <div class="live-pill"><div class="pulse-dot"></div>En Vivo</div>
+    </header>
 
-    <div class="map-section">
-      <div id="map"></div>
-      
-      <!-- PIN CENTRAL FLOTANTE -->
-      <div id="center-pin" class="center-fixed-pin">
-        <div class="pin-head"></div>
-        <div class="pin-shadow"></div>
-      </div>
-
-      <button class="btn-confirm-map" id="btn-confirm-dest">📍 Agregar ubicación</button>
-      <button class="locate-btn" id="btn-locate"><svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></button>
-    </div>
-
-    <div class="bottom-sheet">
-      <div class="location-card">
-        <div class="input-row" id="pickup-row">
-          <div class="dot-icon dot-yellow"></div>
-          <div class="address-info">
-            <div class="address-title" id="display-pickup">Mi ubicación actual</div>
-            <div class="address-sub" id="display-pickup-sub">Buscando GPS...</div>
-          </div>
-        </div>
-        <div class="input-row" id="dropoff-row">
-          <div class="dot-icon dot-black"></div>
-          <div class="address-info">
-            <div class="address-title" id="display-dropoff">¿A dónde vas?</div>
-            <div class="address-sub" id="display-dropoff-sub">Toca para buscar destino en el mapa</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="ride-options" id="ride-options-container">
-        
-        <!-- MODO MOBI COMFORT -->
-        <div class="ride-card active" data-type="comfort" data-price="12.50">
-          <div class="car-img-placeholder" style="background-image: url('https://i.ibb.co/4g4YwfGV/1785764572855.png');"></div>
-          <div class="ride-details">
-            <div class="ride-title">Mobi Comfort</div>
-            <div class="ride-desc">Viajes cómodos y seguros</div>
-          </div>
-          <div class="ride-price">S/ 12.50</div>
-        </div>
-        
-        <!-- MODO MOBI PLUS (A espera de tu imagen) -->
-        <div class="ride-card" data-type="plus" data-price="18.00">
-          <div class="car-img-placeholder" style="background-image: url('');"></div>
-          <div class="ride-details">
-            <div class="ride-title">Mobi Plus</div>
-            <div class="ride-desc">Autos más espaciosos</div>
-          </div>
-          <div class="ride-price">S/ 18.00</div>
-        </div>
-      </div>
-
-      <button class="btn-request" id="btn-request-ride">
-        Pedir un viaje 
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
-
-    <nav class="bottom-nav">
-      <a href="#" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Inicio</a>
-      <a href="#" class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Historial</a>
-      <a href="#" class="nav-item"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>Billetera</a>
-    </nav>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <script>
-    let map, passengerMarker, destinationMarker, routeLine;
-    let currentLat = -12.0863, currentLng = -77.0343; // Coordenadas por defecto
-    let destLat = null, destLng = null;
-    
-    let isSelectingDestination = false;
-    let isRideActive = false;
-    let fullRouteCoords = []; // Guardará las coordenadas para animar el viaje
-
-    const centerPin = document.getElementById('center-pin');
-    const btnConfirmMap = document.getElementById('btn-confirm-dest');
-    const dropoffRow = document.getElementById('dropoff-row');
-    const rideOptionsContainer = document.getElementById('ride-options-container');
-    const btnRequestRide = document.getElementById('btn-request-ride');
-    const locateBtn = document.getElementById('btn-locate');
-    
-    // 1. Inicializar Mapa
-    function initMap(lat, lng) {
-      if(map) return;
-      map = L.map('map', { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-
-      const pinHtml = `<div class="custom-pin"></div>`;
-      passengerMarker = L.marker([lat, lng], { 
-        icon: L.divIcon({ className: '', html: pinHtml, iconSize: [20, 20], iconAnchor: [10, 10] }) 
-      }).addTo(map);
-
-      map.on('movestart', () => {
-        if(isSelectingDestination) centerPin.classList.add('moving');
-      });
-      map.on('moveend', async () => {
-        if(isSelectingDestination) {
-          centerPin.classList.remove('moving');
-          const center = map.getCenter();
-          const address = await getAddressFromCoords(center.lat, center.lng);
-          document.getElementById('display-dropoff').textContent = address.main;
-          document.getElementById('display-dropoff-sub').textContent = address.sub;
-        }
-      });
-    }
-
-    // 2. Geocoding Inverso (Para texto de dirección)
-    async function getAddressFromCoords(lat, lng) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-        const data = await res.json();
-        const parts = data.display_name.split(',');
-        return { main: parts[0] || 'Ubicación seleccionada', sub: (parts[1] ? parts[1].trim() : 'Ciudad') };
-      } catch(e) {
-        return { main: 'Ubicación seleccionada', sub: 'Lat: ' + lat.toFixed(4) };
-      }
-    }
-
-    // 3. Trazar ruta y extraer coordenadas para la animación
-    async function drawRealRoute(lat1, lng1, lat2, lng2) {
-      try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&overview=full`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.routes && data.routes.length > 0) {
-          // Extraer coordenadas de OSRM ([longitud, latitud]) y pasar a Leaflet ([latitud, longitud])
-          const routeGeoJSON = data.routes[0].geometry.coordinates;
-          fullRouteCoords = routeGeoJSON.map(coord => [coord[1], coord[0]]);
-
-          if(routeLine) map.removeLayer(routeLine);
-          
-          // Usamos L.polyline en vez de GeoJSON para poder editar la línea en tiempo real
-          routeLine = L.polyline(fullRouteCoords, {
-            color: '#1C1C1C',
-            weight: 5,
-            opacity: 0.8
-          }).addTo(map);
-
-          map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-        }
-      } catch (e) {
-        console.error("Error obteniendo la ruta", e);
-        fullRouteCoords = [[lat1, lng1], [lat2, lng2]]; // Fallback línea recta
-        routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
-        map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-      }
-    }
-
-    // 4. Iniciar Selección de Destino
-    dropoffRow.addEventListener('click', () => {
-      if(isRideActive) return; // Bloquear si el viaje está en curso
-      
-      isSelectingDestination = true;
-      rideOptionsContainer.classList.add('hidden');
-      btnRequestRide.classList.add('hidden');
-      locateBtn.style.bottom = '80px';
-      
-      centerPin.style.display = 'flex';
-      btnConfirmMap.style.display = 'block';
-
-      document.getElementById('display-dropoff').textContent = 'Mueve el mapa...';
-      document.getElementById('display-dropoff-sub').textContent = 'Apunta donde quieres ir';
-
-      if(destinationMarker) map.removeLayer(destinationMarker);
-      if(routeLine) map.removeLayer(routeLine);
-      fullRouteCoords = [];
-    });
-
-    // 5. Confirmar Destino
-    btnConfirmMap.addEventListener('click', async () => {
-      isSelectingDestination = false;
-      const center = map.getCenter();
-      destLat = center.lat;
-      destLng = center.lng;
-
-      centerPin.style.display = 'none';
-      btnConfirmMap.style.display = 'none';
-      rideOptionsContainer.classList.remove('hidden');
-      btnRequestRide.classList.remove('hidden');
-      locateBtn.style.bottom = '20px';
-
-      const destHtml = `<div class="custom-pin" style="background: #1C1C1C; border-color: #FFD700;"></div>`;
-      destinationMarker = L.marker([destLat, destLng], { 
-        icon: L.divIcon({ className: '', html: destHtml, iconSize: [20, 20], iconAnchor: [10, 10] }) 
-      }).addTo(map);
-
-      btnRequestRide.innerHTML = 'Calculando ruta... ⏳';
-      btnRequestRide.style.background = '#e5c100';
-      btnRequestRide.style.pointerEvents = 'none';
-
-      await drawRealRoute(currentLat, currentLng, destLat, destLng);
-
-      btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-      btnRequestRide.style.background = 'var(--primary)';
-      btnRequestRide.style.pointerEvents = 'auto';
-    });
-
-    // 6. ANIMACIÓN: Simular el Viaje Real
-    function startRideSimulation(coords) {
-      isRideActive = true;
-      
-      let index = 0;
-      let progress = 0;
-      const metersPerFrame = 4; // Ajusta la velocidad visual (4 = velocidad media agradable)
-      
-      function animate() {
-        if (index >= coords.length - 1) {
-          finishRide();
-          return;
-        }
-        
-        const p1 = L.latLng(coords[index]);
-        const p2 = L.latLng(coords[index + 1]);
-        const dist = p1.distanceTo(p2); // Distancia en metros
-        
-        // Calcular velocidad constante basada en la distancia entre nodos
-        if (dist === 0 || progress >= 1) {
-          progress = 0;
-          index++;
-          requestAnimationFrame(animate);
-          return;
-        }
-        
-        const frameSpeed = dist > 0 ? (metersPerFrame / dist) : 1;
-        progress += frameSpeed;
-        const safeProgress = Math.min(progress, 1);
-        
-        // Interpolar posición
-        const lat = p1.lat + (p2.lat - p1.lat) * safeProgress;
-        const lng = p1.lng + (p2.lng - p1.lng) * safeProgress;
-        
-        // 1. Mover el pin del pasajero
-        passengerMarker.setLatLng([lat, lng]);
-        
-        // 2. Centrar cámara siguiéndolo suavemente
-        map.setView([lat, lng], map.getZoom(), { animate: false });
-        
-        // 3. ACTUALIZAR RUTA: Borra la línea que queda atrás
-        if (routeLine) {
-          const remainingPath = [[lat, lng], ...coords.slice(index + 1)];
-          routeLine.setLatLngs(remainingPath);
-        }
-        
-        requestAnimationFrame(animate);
-      }
-      
-      animate();
-    }
-
-    function finishRide() {
-      isRideActive = false;
-      btnRequestRide.innerHTML = '¡Llegaste a tu destino! 🎉';
-      btnRequestRide.style.background = '#4CAF50';
-      btnRequestRide.style.color = '#fff';
-      
-      // Reiniciar estado después de unos segundos
-      setTimeout(() => {
-        btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-        btnRequestRide.style.background = 'var(--primary)';
-        btnRequestRide.style.color = 'var(--text-dark)';
-        btnRequestRide.style.pointerEvents = 'auto';
-        
-        fullRouteCoords = [];
-        if(routeLine) map.removeLayer(routeLine);
-        if(destinationMarker) map.removeLayer(destinationMarker);
-        
-        document.getElementById('display-dropoff').textContent = '¿A dónde vas?';
-        document.getElementById('display-dropoff-sub').textContent = 'Toca para buscar destino en el mapa';
-        
-        // Actualizar currentLat y currentLng al punto final
-        currentLat = destLat;
-        currentLng = destLng;
-      }, 4000);
-    }
-
-    // Evento de Pedir Viaje
-    btnRequestRide.addEventListener('click', () => {
-      if(fullRouteCoords.length > 0 && !isRideActive) {
-        btnRequestRide.innerHTML = 'Viaje en curso... 🚗';
-        btnRequestRide.style.background = '#1C1C1C';
-        btnRequestRide.style.color = '#FFD700';
-        btnRequestRide.style.pointerEvents = 'none'; // Bloquear botón
-        
-        // Iniciar la magia
-        startRideSimulation(fullRouteCoords);
-      } else if (fullRouteCoords.length === 0) {
-        alert("Selecciona tu destino en el mapa primero.");
-      }
-    });
-
-    // Selección de Vehículo
-    document.querySelectorAll('.ride-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-      });
-    });
-
-    // Cargar GPS
-    function requestLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            currentLat = pos.coords.latitude;
-            currentLng = pos.coords.longitude;
+    <main>
+        <!-- SECCIÓN 1: KPIs RESUMEN -->
+        <section class="fade-in-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Balance de Hoy</h2>
+                <span class="section-badge" id="current-date">Cargando...</span>
+            </div>
             
-            const address = await getAddressFromCoords(currentLat, currentLng);
-            document.getElementById('display-pickup').textContent = address.main;
-            document.getElementById('display-pickup-sub').textContent = address.sub;
+            <div class="kpi-grid">
+                <div class="kpi-card featured">
+                    <div class="kpi-top">
+                        <span class="kpi-title">Ingresos Totales</span>
+                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-sack-dollar"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-ingresos">Bs. 0.00</div>
+                    <div class="kpi-trend"><i class="fa-solid fa-arrow-trend-up"></i> Actualizado</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <span class="kpi-title">Despachos</span>
+                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-entregas">0</div>
+                    <div class="kpi-trend"><i class="fa-solid fa-circle-check"></i> En curso</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <span class="kpi-title">Botellones</span>
+                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-bottle-water"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-unidades">0</div>
+                    <div class="kpi-trend" style="color: var(--primary); background: var(--primary-light);">
+                        <i class="fa-solid fa-glass-water"></i> Vendidos
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            if (!map) initMap(currentLat, currentLng);
-            else { map.flyTo([currentLat, currentLng], 16); passengerMarker.setLatLng([currentLat, currentLng]); }
-          },
-          (err) => {
-            if (!map) initMap(currentLat, currentLng);
-          }
-        );
-      } else {
-        if (!map) initMap(currentLat, currentLng);
-      }
-    }
+        <!-- SECCIÓN 2: ESTADO DE FLOTA -->
+        <section class="fade-in-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-truck-fast" style="color: var(--primary);"></i> Inventario en Ruta</h2>
+                <span class="section-badge">Almacenes Móviles</span>
+            </div>
+            
+            <div class="fleet-wrapper" id="fleet-list">
+                <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando flota...</div>
+            </div>
+        </section>
 
-    locateBtn.addEventListener('click', requestLocation);
-    window.onload = requestLocation;
+        <!-- SECCIÓN 3: GRÁFICO FLUIDO -->
+        <section class="fade-in-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Flujo de Ventas</h2>
+                <span class="section-badge">Hoy</span>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header-info">
+                    <div>
+                        <div class="chart-stat-label">Hora Pico</div>
+                        <div class="chart-stat-val" id="chart-peak">--:--</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="chart-stat-label">Promedio / Despacho</div>
+                        <div class="chart-stat-val" id="chart-avg">Bs. 0.00</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="fluidChart"></canvas>
+                </div>
+            </div>
+        </section>
 
-  </script>
+        <!-- SECCIÓN 4: DESPACHOS RECIENTES -->
+        <section class="fade-in-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Últimas Entregas</h2>
+                <span class="section-badge">Tiempo real</span>
+            </div>
+            
+            <div class="delivery-list-wrapper" id="delivery-list">
+                <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando entregas...</div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Inicializar Supabase
+        const { createClient } = supabase;
+        const supabaseUrl = 'https://dyodvgdmsrsdwcgjlitv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5b2R2Z2Rtc3JzZHdjZ2psaXR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODM0MTYsImV4cCI6MjEwMTM1OTQxNn0.2Q_IUGGfnWytGCv01xVhiCYPPpSolGwEvly2Pp5KOKE';
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // Variables Globales
+        let fluidChartInstance = null;
+
+        // Utilidades de formato
+        const fmtBs = (val) => `Bs. ${Number(val).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        const formatTime = (dateString) => {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        // Mostrar fecha actual
+        const now = new Date();
+        document.getElementById('current-date').innerText = now.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+
+        // Configuración de Animaciones de Scroll
+        const initScrollAnimations = () => {
+            const sections = document.querySelectorAll('.fade-in-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => entry.target.classList.add('is-visible'), index * 120);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            sections.forEach(s => observer.observe(s));
+        };
+
+        // Cargar Datos de Flota (Almacenes Móviles)
+        async function fetchFlota() {
+            try {
+                const { data: flotaData, error } = await supabaseClient
+                    .from('flota')
+                    .select('*')
+                    .order('nombre');
+
+                if (error) throw error;
+
+                const fleetContainer = document.getElementById('fleet-list');
+                fleetContainer.innerHTML = ''; // Limpiar loader
+
+                flotaData.forEach(f => {
+                    const porcentaje = Math.max(0, Math.min(100, (f.stock_actual / f.capacidad_maxima) * 100));
+                    const barClass = porcentaje < 25 ? 'inventory-fill low' : 'inventory-fill';
+                    
+                    let statusHtml = f.estado === 'ruta' 
+                        ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>`
+                        : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
+
+                    fleetContainer.innerHTML += `
+                        <div class="fleet-card">
+                            <div class="fleet-header">
+                                <div class="fleet-name"><i class="fa-solid fa-truck"></i> ${f.nombre}</div>
+                                <div class="fleet-trip">Viaje ${f.viaje_actual}</div>
+                            </div>
+                            <div class="inventory-bar">
+                                <div class="${barClass}" style="width: ${porcentaje}%"></div>
+                            </div>
+                            <div class="fleet-footer">
+                                <span>${f.stock_actual} / ${f.capacidad_maxima} Botellones</span>
+                                ${statusHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error cargando flota:", error);
+                document.getElementById('fleet-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando datos de flota. Revisa la consola o las políticas RLS.</div>`;
+            }
+        }
+
+        // Cargar Entregas, KPIs y Gráfico
+        async function fetchEntregas() {
+            try {
+                // Hacemos un join con flota para obtener el nombre de la camioneta
+                const { data: entregas, error } = await supabaseClient
+                    .from('entregas')
+                    .select(`
+                        id, cliente, unidades, metodo_pago, total, created_at,
+                        flota ( nombre )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // 1. Calcular KPIs
+                let totalIngresos = 0; 
+                let totalUnidades = 0;
+                
+                entregas.forEach(e => { 
+                    totalIngresos += Number(e.total); 
+                    totalUnidades += Number(e.unidades); 
+                });
+
+                document.getElementById('kpi-ingresos').innerText = fmtBs(totalIngresos);
+                document.getElementById('kpi-entregas').innerText = entregas.length;
+                document.getElementById('kpi-unidades').innerText = totalUnidades;
+                
+                const avg = entregas.length > 0 ? (totalIngresos / entregas.length) : 0;
+                document.getElementById('chart-avg').innerText = fmtBs(avg);
+
+                // 2. Renderizar Lista de Entregas
+                const listContainer = document.getElementById('delivery-list');
+                listContainer.innerHTML = ''; // Limpiar loader
+
+                if (entregas.length === 0) {
+                    listContainer.innerHTML = `<div class="loading-text">No hay entregas registradas aún.</div>`;
+                }
+
+                entregas.forEach(e => {
+                    // Asignar color al método de pago
+                    let payClass = 'pay-efectivo';
+                    const metodo = (e.metodo_pago || '').toLowerCase();
+                    if (metodo.includes('qr')) payClass = 'pay-qr';
+                    else if (metodo.includes('crédito') || metodo.includes('credito')) payClass = 'pay-credito';
+                    else if (metodo.includes('transferencia')) payClass = 'pay-transferencia';
+
+                    const nombreFlota = e.flota ? e.flota.nombre : 'Flota Desconocida';
+                    const horaFormat = formatTime(e.created_at);
+
+                    listContainer.innerHTML += `
+                        <div class="delivery-item">
+                            <div class="delivery-left">
+                                <div class="truck-avatar"><i class="fa-solid fa-truck-droplet"></i></div>
+                                <div>
+                                    <div class="delivery-client">${e.cliente}</div>
+                                    <div class="delivery-meta-sub">
+                                        <span><i class="fa-regular fa-clock"></i> ${horaFormat}</span> • <span>${nombreFlota}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="delivery-right">
+                                <div class="delivery-price">${fmtBs(e.total)}</div>
+                                <span class="payment-pill ${payClass}">${e.metodo_pago} (${e.unidades} u.)</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // 3. Preparar datos para el Gráfico
+                updateChart(entregas);
+
+            } catch (error) {
+                console.error("Error cargando entregas:", error);
+                document.getElementById('delivery-list').innerHTML = `<div class="loading-text" style="color:red;">Error cargando entregas. Revisa la consola o las políticas RLS.</div>`;
+            }
+        }
+
+        // Función para procesar y actualizar el Gráfico de Chart.js
+        function updateChart(entregas) {
+            // Agrupar ventas acumuladas o por despacho (orden cronológico)
+            // Para el flujo visualizamos las entregas de la más antigua a la más nueva
+            const entregasCrono = [...entregas].reverse();
+            
+            let labels = [];
+            let dataPoints = [];
+            let acumulado = 0;
+
+            entregasCrono.forEach(e => {
+                acumulado += Number(e.total);
+                labels.push(formatTime(e.created_at));
+                dataPoints.push(acumulado);
+            });
+
+            // Si hay datos, estimar hora pico visualmente
+            if(labels.length > 0) {
+                document.getElementById('chart-peak').innerText = labels[Math.floor(labels.length / 2)] + " aprox";
+            }
+
+            const ctx = document.getElementById('fluidChart').getContext('2d');
+            
+            // Si el gráfico ya existe, lo destruimos para redibujarlo
+            if (fluidChartInstance) {
+                fluidChartInstance.destroy();
+            }
+
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 200);
+            gradientFill.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
+            gradientFill.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
+
+            fluidChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length > 0 ? labels : ['08:00', '10:00', '12:00'],
+                    datasets: [{
+                        label: 'Ventas Acumuladas',
+                        data: dataPoints.length > 0 ? dataPoints : [0, 0, 0],
+                        borderColor: '#0284c7', borderWidth: 3,
+                        pointBackgroundColor: '#ffffff', pointBorderColor: '#0284c7', pointBorderWidth: 2.5,
+                        pointRadius: 4, pointHoverRadius: 6,
+                        tension: 0.42, fill: true, backgroundColor: gradientFill
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                            padding: 10, cornerRadius: 8, displayColors: false,
+                            callbacks: { label: (context) => ` Acumulado: Bs. ${context.raw.toLocaleString('es-BO')}` }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' }, callback: (v) => 'Bs.' + v } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' } } }
+                    }
+                }
+            });
+        }
+
+        // Ejecutar funciones al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            initScrollAnimations();
+            fetchFlota();
+            fetchEntregas();
+            
+            // Opcional: Refrescar datos automáticamente cada 30 segundos
+            // setInterval(() => { fetchFlota(); fetchEntregas(); }, 30000);
+        });
+    </script>
 </body>
 </html>
