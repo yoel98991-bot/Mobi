@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Mobi - Pasajero</title>
+  <title>Mobi - Pasajero (Con Rutas Reales)</title>
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
@@ -76,7 +76,7 @@
     }
     .locate-btn svg { width: 20px; height: 20px; fill: var(--text-dark); }
 
-    /* Custom Map Marker (Pin HTML) */
+    /* PIN DE INICIO Y DESTINO */
     .custom-pin {
       background: var(--text-dark); width: 20px; height: 20px;
       border-radius: 50%; display: flex; justify-content: center;
@@ -94,8 +94,8 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -100%);
       z-index: 1000;
-      pointer-events: none; /* Crucial para poder mover el mapa debajo */
-      display: none; /* Oculto por defecto */
+      pointer-events: none;
+      display: none; 
       flex-direction: column;
       align-items: center;
     }
@@ -113,7 +113,6 @@
       width: 12px; height: 4px; background: rgba(0,0,0,0.3);
       border-radius: 50%; margin-top: 5px;
     }
-    /* Animación al mover el mapa */
     .center-fixed-pin.moving .pin-head { transform: translateY(-10px) rotate(-45deg); transition: 0.2s; }
     .center-fixed-pin.moving .pin-shadow { transform: scale(0.5); transition: 0.2s; }
 
@@ -202,7 +201,6 @@
         <div class="pin-shadow"></div>
       </div>
 
-      <!-- BOTONES DEL MAPA -->
       <button class="btn-confirm-map" id="btn-confirm-dest">📍 Agregar ubicación</button>
       <button class="locate-btn" id="btn-locate"><svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></button>
     </div>
@@ -225,7 +223,6 @@
         </div>
       </div>
 
-      <!-- Opciones de Viaje -->
       <div class="ride-options" id="ride-options-container">
         <div class="ride-card active" data-type="comfort" data-price="12.50">
           <div class="car-img-placeholder" style="background-image: url('');"></div>
@@ -262,11 +259,10 @@
   
   <script>
     let map, passengerMarker, destinationMarker, routeLine;
-    let currentLat = -12.0863, currentLng = -77.0343; // Coordenadas inicio
+    let currentLat = -12.0863, currentLng = -77.0343; // Coordenadas por defecto
     let destLat = null, destLng = null;
     let isSelectingDestination = false;
 
-    // Elementos del DOM
     const centerPin = document.getElementById('center-pin');
     const btnConfirmMap = document.getElementById('btn-confirm-dest');
     const dropoffRow = document.getElementById('dropoff-row');
@@ -280,13 +276,11 @@
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-      // Pin de Recogida
       const pinHtml = `<div class="custom-pin"></div>`;
       passengerMarker = L.marker([lat, lng], { 
         icon: L.divIcon({ className: '', html: pinHtml, iconSize: [20, 20], iconAnchor: [10, 10] }) 
       }).addTo(map);
 
-      // Eventos del mapa para animar el pin central
       map.on('movestart', () => {
         if(isSelectingDestination) centerPin.classList.add('moving');
       });
@@ -294,7 +288,6 @@
         if(isSelectingDestination) {
           centerPin.classList.remove('moving');
           const center = map.getCenter();
-          // Obtener nombre de la calle usando OpenStreetMap Nominatim
           const address = await getAddressFromCoords(center.lat, center.lng);
           document.getElementById('display-dropoff').textContent = address.main;
           document.getElementById('display-dropoff-sub').textContent = address.sub;
@@ -302,31 +295,56 @@
       });
     }
 
-    // 2. Traducir Coordenadas a Dirección (Geocoding API Gratis)
+    // 2. Geocoding Inverso (Para texto de dirección)
     async function getAddressFromCoords(lat, lng) {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
         const data = await res.json();
-        
-        // Formatear dirección para que se vea bonita
         const parts = data.display_name.split(',');
-        return { 
-          main: parts[0] || 'Ubicación seleccionada', 
-          sub: (parts[1] ? parts[1].trim() : 'Ciudad') 
-        };
+        return { main: parts[0] || 'Ubicación seleccionada', sub: (parts[1] ? parts[1].trim() : 'Ciudad') };
       } catch(e) {
         return { main: 'Ubicación seleccionada', sub: 'Lat: ' + lat.toFixed(4) };
       }
     }
 
-    // 3. Activar Modo "Seleccionar Destino"
+    // 3. NUEVO: Función para trazar la ruta real por calles (API OSRM)
+    async function drawRealRoute(lat1, lng1, lat2, lng2) {
+      try {
+        // OSRM requiere las coordenadas en formato longitud,latitud
+        const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&overview=full`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const routeGeoJSON = data.routes[0].geometry;
+
+          // Dibujar la ruta usando GeoJSON devuelto por la API
+          routeLine = L.geoJSON(routeGeoJSON, {
+            style: {
+              color: '#1C1C1C', // Color de la línea de la ruta
+              weight: 5,        // Grosor
+              opacity: 0.8
+            }
+          }).addTo(map);
+
+          // Ajustar la cámara del mapa para que se vea toda la ruta
+          map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+        }
+      } catch (e) {
+        console.error("Error obteniendo la ruta por calles:", e);
+        // Fallback: Si falla la API (sin internet o límite alcanzado), dibuja la línea recta
+        routeLine = L.polyline([[lat1, lng1], [lat2, lng2]], { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
+        map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+      }
+    }
+
+    // 4. Activar Modo "Seleccionar Destino"
     dropoffRow.addEventListener('click', () => {
       isSelectingDestination = true;
-      
-      // Ocultar UI de opciones, mostrar pin central y botón de confirmar
       rideOptionsContainer.classList.add('hidden');
       btnRequestRide.classList.add('hidden');
-      locateBtn.style.bottom = '80px'; // Subir el boton GPS
+      locateBtn.style.bottom = '80px';
       
       centerPin.style.display = 'flex';
       btnConfirmMap.style.display = 'block';
@@ -334,42 +352,44 @@
       document.getElementById('display-dropoff').textContent = 'Mueve el mapa...';
       document.getElementById('display-dropoff-sub').textContent = 'Apunta donde quieres ir';
 
-      // Limpiar ruta previa si existía
       if(destinationMarker) map.removeLayer(destinationMarker);
       if(routeLine) map.removeLayer(routeLine);
     });
 
-    // 4. Confirmar Destino (Fijar Punto)
-    btnConfirmMap.addEventListener('click', () => {
+    // 5. Confirmar Destino y Generar Ruta
+    btnConfirmMap.addEventListener('click', async () => {
       isSelectingDestination = false;
       const center = map.getCenter();
       destLat = center.lat;
       destLng = center.lng;
 
-      // Volver a la UI normal
+      // Volver UI a la normalidad
       centerPin.style.display = 'none';
       btnConfirmMap.style.display = 'none';
       rideOptionsContainer.classList.remove('hidden');
       btnRequestRide.classList.remove('hidden');
       locateBtn.style.bottom = '20px';
 
-      // Dibujar Pin de destino Negro
+      // Dibujar marcador de destino
       const destHtml = `<div class="custom-pin" style="background: #1C1C1C; border-color: #FFD700;"></div>`;
       destinationMarker = L.marker([destLat, destLng], { 
         icon: L.divIcon({ className: '', html: destHtml, iconSize: [20, 20], iconAnchor: [10, 10] }) 
       }).addTo(map);
 
-      // Dibujar línea de ruta negra gruesa
-      routeLine = L.polyline([
-        [currentLat, currentLng], 
-        [destLat, destLng]
-      ], { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
+      // Feedback visual mientras carga la ruta
+      const btnOriginalHtml = btnRequestRide.innerHTML;
+      btnRequestRide.innerHTML = 'Calculando ruta... ⏳';
+      btnRequestRide.style.background = '#e5c100';
 
-      // Ajustar mapa para que se vean ambos puntos
-      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+      // Ejecutar la función de ruta real
+      await drawRealRoute(currentLat, currentLng, destLat, destLng);
+
+      // Restaurar el botón
+      btnRequestRide.innerHTML = btnOriginalHtml;
+      btnRequestRide.style.background = 'var(--primary)';
     });
 
-    // Selección de Vehículo UI
+    // Selección de Vehículo
     document.querySelectorAll('.ride-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('active'));
@@ -377,7 +397,7 @@
       });
     });
 
-    // GPS y Carga inicial
+    // Cargar GPS
     function requestLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
