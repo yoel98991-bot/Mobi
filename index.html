@@ -134,6 +134,15 @@
         .btn-primary:active { opacity: 0.8; }
         .btn-secondary { background: #10b981; }
 
+        /* --- TABLA DE CHOFERES --- */
+        .table-container { overflow-x: auto; margin-top: 15px; border-radius: 8px; border: 1px solid var(--border); }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: var(--surface); }
+        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        .data-table th { color: var(--text-muted); font-weight: 700; background: var(--surface-subtle); font-size: 0.75rem; text-transform: uppercase; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .btn-edit { background: var(--warning-light); color: var(--warning); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 700; font-family: inherit; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
+        .btn-edit:active { transform: scale(0.95); }
+
         /* --- LISTA DE DESPACHOS --- */
         .delivery-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
         .delivery-item { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
@@ -241,6 +250,24 @@
                             <i class="fa-solid fa-save"></i> Guardar Chofer
                         </button>
                     </form>
+
+                    <!-- NUEVO: Directorio de Choferes con Edición de Placa -->
+                    <hr style="margin: 25px 0 15px 0; border: 0; border-top: 1px dashed var(--border);">
+                    <div class="form-title" style="font-size: 0.85rem; margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Directorio de Choferes</div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Placa</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="choferes-tbody">
+                                <tr><td colspan="3" class="loading-text">Cargando perfiles...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- FORMULARIO 2: Despachar Unidad a la Ruta -->
@@ -332,20 +359,65 @@
             sections.forEach(s => observer.observe(s));
         };
 
-        // Cargar Lista de Choferes
+        // Cargar Lista de Choferes (Actualizado para llenar el Select y la Tabla)
         async function fetchChoferesDropdown() {
             try {
                 const { data: choferes, error } = await supabaseClient.from('choferes').select('id, nombre, placa').order('nombre');
                 if (error) throw error;
+                
                 const select = document.getElementById('flota-chofer-select');
+                const tbody = document.getElementById('choferes-tbody');
+                
                 select.innerHTML = '<option value="">Selecciona un chofer...</option>';
+                tbody.innerHTML = '';
+                
+                if(choferes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--text-muted);">No hay choferes registrados</td></tr>';
+                }
+
                 choferes.forEach(c => {
+                    // Llenar el Dropdown de despacho
                     select.innerHTML += `<option value="${c.id}">${c.nombre} (Placa: ${c.placa || 'N/A'})</option>`;
+                    
+                    // Llenar la Tabla del Directorio
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 600;">${c.nombre}</td>
+                            <td>${c.placa || 'N/A'}</td>
+                            <td>
+                                <button type="button" class="btn-edit" onclick="editarPlaca('${c.id}', '${c.nombre}', '${c.placa || ''}')">
+                                    <i class="fa-solid fa-pen"></i> Editar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
                 });
             } catch (error) { console.error("Error cargando choferes:", error); }
         }
 
-        // Cargar Inventario de Flotas en Ruta (Con soporte de estado en tiempo real)
+        // Función global para editar la placa desde la tabla
+        window.editarPlaca = async function(id, nombre, placaActual) {
+            const nuevaPlaca = prompt(`Editar número de placa para el chofer: ${nombre}`, placaActual);
+            
+            // Verificamos que no haya cancelado y que no esté vacío
+            if (nuevaPlaca !== null && nuevaPlaca.trim() !== '') {
+                try {
+                    const { error } = await supabaseClient.from('choferes')
+                        .update({ placa: nuevaPlaca.trim() })
+                        .eq('id', id);
+                        
+                    if (error) throw error;
+                    
+                    alert('Placa actualizada correctamente.');
+                    fetchChoferesDropdown(); // Recargar la tabla y el select automáticamente
+                } catch (error) {
+                    alert("Error al actualizar la placa en la base de datos.");
+                    console.error(error);
+                }
+            }
+        };
+
+        // Cargar Inventario de Flotas en Ruta
         async function fetchFlota() {
             try {
                 const { data: flotaData, error } = await supabaseClient
@@ -367,7 +439,6 @@
                     const porcentaje = Math.max(0, Math.min(100, (f.stock_actual / f.capacidad_maxima) * 100));
                     const barClass = porcentaje < 25 ? 'inventory-fill low' : 'inventory-fill';
                     
-                    // Aquí leemos correctamente el estado dinámico enviado por el chofer
                     let statusHtml = f.estado === 'ruta' 
                         ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>` 
                         : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
@@ -515,7 +586,7 @@
                 const { error } = await supabaseClient.from('choferes').insert([{ nombre, placa }]);
                 if (error) throw error;
                 document.getElementById('form-chofer').reset();
-                await fetchChoferesDropdown();
+                await fetchChoferesDropdown(); // Esto actualizará la tabla y el select a la vez
                 alert(`Chofer ${nombre} registrado correctamente.`);
             } catch (error) { alert("Error al guardar chofer."); } 
             finally { btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Chofer'; btn.disabled = false; }
@@ -553,7 +624,7 @@
             fetchFlota();
             fetchEntregas();
 
-            // Sincronización automática: actualiza la flota y entregas cada 5 segundos
+            // Sincronización automática
             setInterval(() => {
                 fetchFlota();
                 fetchEntregas();
