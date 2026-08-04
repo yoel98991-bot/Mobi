@@ -1,4 +1,3 @@
- 
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -903,6 +902,7 @@
             renderizarCarrito();
             toast('Operación registrada exitosamente.');
             cargarInventario();
+            sincronizar(); // <--- LLAMADA A LA SINCRONIZACIÓN AUTOMÁTICA AÑADIDA
         }
 
         document.getElementById('btnAgregarProducto').addEventListener('click', agregarProductoAVenta);
@@ -1059,24 +1059,34 @@
         async function descargarDatosDeSupabase() {
             try {
                 console.log("Intentando conectar a Supabase...");
-                const { data: productosNube, error } = await supabaseClient
-                    .from('productos')
-                    .select('*');
                 
-                if (error) {
-                    console.error("Error de Supabase:", error);
-                    throw error;
-                }
-
-                console.log("Productos encontrados en la nube:", productosNube);
-
+                // 1. Descargar Productos
+                const { data: productosNube, error: errProd } = await supabaseClient.from('productos').select('*');
+                if (errProd) throw errProd;
                 if (productosNube && productosNube.length > 0) {
                     await db.productos.bulkPut(productosNube);
-                    cargarInventario();
-                    toast('Inventario sincronizado desde la nube');
-                } else {
-                    console.log("La tabla de Supabase está vacía. Añade un producto desde el botón '+ Nuevo'.");
                 }
+
+                // 2. Descargar Ventas <--- AÑADIDO
+                const { data: ventasNube, error: errVent } = await supabaseClient.from('ventas').select('*');
+                if (errVent) throw errVent;
+                if (ventasNube && ventasNube.length > 0) {
+                    await db.ventas.bulkPut(ventasNube);
+                }
+
+                // 3. Descargar Detalle de Ventas <--- AÑADIDO
+                const { data: detallesNube, error: errDet } = await supabaseClient.from('ventas_detalle').select('*');
+                if (errDet) throw errDet;
+                if (detallesNube && detallesNube.length > 0) {
+                    await db.ventas_detalle.bulkPut(detallesNube);
+                }
+
+                cargarInventario();
+                if (typeof cargarHistorial === "function") cargarHistorial();
+                if (typeof cargarResumen === "function") cargarResumen();
+                
+                toast('Inventario y ventas sincronizados desde la nube');
+                
             } catch (e) {
                 console.error("Error al descargar de Supabase:", e);
                 toast('Error de conexión con la nube');
@@ -1091,4 +1101,3 @@
     </script>
 </body>
 </html>
-
