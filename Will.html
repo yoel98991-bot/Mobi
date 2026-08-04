@@ -17,7 +17,6 @@
     
     <style>
         :root {
-            /* Paleta Premium Negro y Rojo */
             --bg: #030303;
             --surface: #0f0f0f;
             --surface-light: #161616;
@@ -46,7 +45,6 @@
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg);
-            /* Fondo con ligero resplandor rojo en la parte superior */
             background-image: radial-gradient(circle at 50% 0%, #1f0505 0%, #030303 60%);
             background-attachment: fixed;
             color: var(--text);
@@ -63,7 +61,6 @@
             padding-top: max(16px, env(safe-area-inset-top));
         }
 
-        /* Header Sofisticado */
         .app-header {
             padding: 24px 0 20px;
             border-bottom: 1px solid var(--border-light);
@@ -110,7 +107,6 @@
             font-weight: 600;
         }
 
-        /* Paneles */
         .panel {
             display: none;
             animation: fadeSlide 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -123,7 +119,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Tarjetas (Cards) Premium */
         .card {
             background: linear-gradient(145deg, #111111, #0a0a0a);
             border: 1px solid var(--border);
@@ -154,7 +149,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Badge Elegante */
         .badge {
             background: rgba(211, 47, 47, 0.1);
             color: var(--accent);
@@ -167,7 +161,6 @@
             text-transform: uppercase;
         }
 
-        /* Formularios Estilizados */
         .input-group {
             margin-bottom: 16px;
         }
@@ -200,7 +193,6 @@
             box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
         }
 
-        /* Botones Profesionales */
         .btn {
             background: linear-gradient(135deg, var(--accent), var(--accent-dark));
             color: #fff;
@@ -267,7 +259,6 @@
             background: rgba(211, 47, 47, 0.1);
         }
 
-        /* Lista de productos Minimalista */
         .product-item {
             display: flex;
             align-items: center;
@@ -331,7 +322,6 @@
             font-weight: 700;
         }
 
-        /* Carrito de venta */
         .cart-item {
             display: flex;
             justify-content: space-between;
@@ -362,7 +352,6 @@
             color: var(--accent);
         }
 
-        /* Resumen Dashboard */
         .summary-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -399,7 +388,6 @@
             font-weight: 600;
         }
 
-        /* Navegación inferior Efecto Cristal */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -437,7 +425,6 @@
             text-shadow: 0 0 12px rgba(211, 47, 47, 0.5);
         }
 
-        /* Toast Notificaciones */
         .toast {
             position: fixed;
             bottom: 100px;
@@ -497,8 +484,12 @@
                     <span class="badge" id="badgeCliente">Consumidor Final</span>
                 </div>
                 <div class="input-group">
-                    <label>Cliente</label>
-                    <input class="input-field" id="inputCliente" placeholder="Nombre o Razón Social">
+                    <label>Cliente (Nombre / Razón Social)</label>
+                    <input class="input-field" id="inputCliente" placeholder="Nombre completo">
+                </div>
+                <div class="input-group">
+                    <label>Carnet / NIT (CI del Cliente)</label>
+                    <input class="input-field" type="number" id="inputClienteCi" placeholder="Ej: 8492031 o NIT" style="font-size: 1.1rem; letter-spacing: 1px;">
                 </div>
                 <div id="carritoContainer"></div>
                 <button class="btn btn-outline" id="btnAgregarProducto" style="margin-top: 10px;">+ Añadir equipo</button>
@@ -574,12 +565,15 @@
 
     <script>
     (function() {
+        // ========== CONFIGURACIÓN ADMIN ==========
+        const ADMIN_PASSWORD = "Urkupiña3009#";
+
         // ========== BASE DE DATOS LOCAL (Dexie) ==========
         const db = new Dexie('FerroWillDB');
         db.version(1).stores({
             productos: 'id, nombre, descripcion, imagen_url, costo, precio_venta, stock, creado_en, actualizado_en',
-            ventas: 'id, fecha, cliente, metodo_pago, total, creado_en',
-            ventas_detalle: 'id, venta_id, producto_id, cantidad, precio_unitario, subtotal, creado_en'
+            ventas: 'id, fecha, cliente, cliente_ci, metodo_pago, total, creado_en',
+            ventas_detalle: 'id, venta_id, producto_id, cantidad, precio_unitario, costo_unitario, subtotal, creado_en'
         });
 
         // ========== SUPABASE CLIENT ==========
@@ -623,6 +617,52 @@
             setTimeout(() => el.style.display = 'none', 3000);
         }
 
+        // ========== MODAL DE CONTRASEÑA ADMIN ==========
+        function pedirPasswordAdmin(callbackExito) {
+            const modalPass = document.createElement('div');
+            modalPass.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:110;display:flex;align-items:center;justify-content:center;padding:16px;';
+            modalPass.innerHTML = `
+                <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:var(--radius);padding:24px;width:100%;max-width:340px;box-shadow:0 15px 35px rgba(0,0,0,0.8);">
+                    <h3 style="margin-bottom:8px;font-family:'Cinzel', serif;color:#fff;font-size:1.1rem;">Restringido</h3>
+                    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:16px;">Ingrese la contraseña de Administrador para continuar.</p>
+                    <div class="input-group">
+                        <label>Contraseña</label>
+                        <input class="input-field" type="password" id="inputAdminPass" placeholder="••••••••••••" autofocus>
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:20px;">
+                        <button class="btn btn-outline" id="btnCancelPass">Cancelar</button>
+                        <button class="btn" id="btnConfirmPass">Autorizar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalPass);
+
+            const inputPass = document.getElementById('inputAdminPass');
+            inputPass.focus();
+
+            const cerrarModal = () => modalPass.remove();
+
+            document.getElementById('btnCancelPass').addEventListener('click', cerrarModal);
+            document.getElementById('btnConfirmPass').addEventListener('click', () => {
+                if (inputPass.value === ADMIN_PASSWORD) {
+                    cerrarModal();
+                    callbackExito();
+                } else {
+                    toast('Contraseña incorrecta ❌');
+                }
+            });
+            inputPass.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (inputPass.value === ADMIN_PASSWORD) {
+                        cerrarModal();
+                        callbackExito();
+                    } else {
+                        toast('Contraseña incorrecta ❌');
+                    }
+                }
+            });
+        }
+
         // ========== INVENTARIO ==========
         async function cargarInventario() {
             const productos = await db.productos.toArray();
@@ -648,7 +688,12 @@
             `).join('');
 
             document.querySelectorAll('.product-item').forEach(item => {
-                item.addEventListener('click', () => editarProducto(item.dataset.id));
+                item.addEventListener('click', () => {
+                    // SECCIÓN PROTEGIDA CON CONTRASEÑA
+                    pedirPasswordAdmin(() => {
+                        editarProducto(item.dataset.id);
+                    });
+                });
             });
         }
 
@@ -697,7 +742,6 @@
                 return;
             }
 
-            // --- INICIO DE FEEDBACK VISUAL ---
             const btnGuardar = document.getElementById('btnGuardarProducto');
             const btnCancelar = document.getElementById('btnCancelarModal');
             const textoOriginal = btnGuardar.textContent;
@@ -705,7 +749,6 @@
             btnGuardar.textContent = 'Guardando... ⏳';
             btnGuardar.disabled = true;
             btnCancelar.disabled = true;
-            // ----------------------------------
 
             try {
                 let imagen_url = '';
@@ -744,7 +787,6 @@
                 console.error("Error en guardarProducto:", error);
                 toast(error.message || 'Ocurrió un error inesperado al guardar.');
                 
-                // Restaurar los botones si falla para que el usuario pueda reintentar
                 btnGuardar.textContent = textoOriginal;
                 btnGuardar.disabled = false;
                 btnCancelar.disabled = false;
@@ -755,7 +797,12 @@
             abrirFormularioProducto(id);
         }
 
-        document.getElementById('btnNuevoProducto').addEventListener('click', () => abrirFormularioProducto());
+        // Botón "+ Nuevo" también protegido por contraseña para administradores
+        document.getElementById('btnNuevoProducto').addEventListener('click', () => {
+            pedirPasswordAdmin(() => {
+                abrirFormularioProducto();
+            });
+        });
 
         // ========== VENTAS ==========
         async function agregarProductoAVenta() {
@@ -858,6 +905,15 @@
                 return;
             }
             const cliente = document.getElementById('inputCliente').value.trim() || 'Consumidor Final';
+            const clienteCi = document.getElementById('inputClienteCi').value.trim();
+
+            // Validación estricta del carnet / NIT del cliente para la facturación
+            if (!clienteCi) {
+                toast('Debe ingresar el carnet o NIT del cliente. ⚠️');
+                document.getElementById('inputClienteCi').focus();
+                return;
+            }
+
             const ventaId = crypto.randomUUID();
             const fecha = new Date().toISOString();
 
@@ -874,7 +930,6 @@
                     const prod = await db.productos.get(item.producto_id);
                     await db.productos.update(item.producto_id, { stock: prod.stock - item.cantidad });
                     
-                    // AQUI AÑADIMOS EL COSTO Y EL SUBTOTAL
                     await db.ventas_detalle.add({
                         id: crypto.randomUUID(),
                         venta_id: ventaId,
@@ -890,6 +945,7 @@
                     id: ventaId,
                     fecha,
                     cliente,
+                    cliente_ci: clienteCi, // Se guarda el carnet boliviano
                     metodo_pago: 'Efectivo',
                     total: totalCarrito,
                     creado_en: fecha
@@ -899,10 +955,12 @@
             carrito = [];
             totalCarrito = 0;
             document.getElementById('inputCliente').value = '';
+            document.getElementById('inputClienteCi').value = '';
+            document.getElementById('badgeCliente').textContent = 'Consumidor Final';
             renderizarCarrito();
             toast('Operación registrada exitosamente.');
             cargarInventario();
-            sincronizar(); // <--- LLAMADA A LA SINCRONIZACIÓN AUTOMÁTICA AÑADIDA
+            sincronizar();
         }
 
         document.getElementById('btnAgregarProducto').addEventListener('click', agregarProductoAVenta);
@@ -924,7 +982,7 @@
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
                             <div style="font-weight:700; color:#fff;">${v.cliente}</div>
-                            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">${new Date(v.fecha).toLocaleDateString()}</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">CI/NIT: ${v.cliente_ci || 'S/N'} • ${new Date(v.fecha).toLocaleDateString()}</div>
                         </div>
                         <span style="font-family:'Cinzel', serif; font-weight:700; color:var(--accent);">Bs ${v.total.toFixed(2)}</span>
                     </div>
@@ -944,7 +1002,6 @@
                     let html = '';
                     for (let d of detalles) {
                         const prod = await db.productos.get(d.producto_id);
-                        // Aseguramos que siempre haya un valor para subtotal (por si hay registros antiguos vacíos)
                         const sub = d.subtotal || (d.cantidad * d.precio_unitario) || 0; 
                         html += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:6px; color:#ddd;">
                                     <span>${prod?.nombre || 'Equipo Eliminado'} <span style="color:#888;">(x${d.cantidad})</span></span>
@@ -974,7 +1031,6 @@
                     for (let d of detalles) {
                         const prod = await db.productos.get(d.producto_id);
                         if (prod) {
-                             // Si no existe d.subtotal, lo calcula en el aire para que no de error
                              const sub = d.subtotal || (d.cantidad * d.precio_unitario);
                              const costoU = d.costo_unitario || prod.costo;
                              ganancia += sub - (costoU * d.cantidad);
@@ -1019,7 +1075,7 @@
                 const ventas = await db.ventas.toArray();
                 for (let v of ventas) {
                     await supabaseClient.from('ventas').upsert({
-                        id: v.id, fecha: v.fecha, cliente: v.cliente,
+                        id: v.id, fecha: v.fecha, cliente: v.cliente, cliente_ci: v.cliente_ci,
                         metodo_pago: v.metodo_pago, total: v.total, creado_en: v.creado_en
                     });
                     const detalles = await db.ventas_detalle.where('venta_id').equals(v.id).toArray();
@@ -1030,8 +1086,8 @@
                             producto_id: d.producto_id,
                             cantidad: d.cantidad, 
                             precio_unitario: d.precio_unitario, 
-                            costo_unitario: d.costo_unitario || 0, // Fallback por si hay datos viejos
-                            subtotal: d.subtotal || (d.cantidad * d.precio_unitario), // Fallback
+                            costo_unitario: d.costo_unitario || 0,
+                            subtotal: d.subtotal || (d.cantidad * d.precio_unitario),
                             creado_en: d.creado_en
                         });
                     }
@@ -1051,30 +1107,23 @@
         }
 
         document.getElementById('btnSincronizar').addEventListener('click', sincronizar);
-
-        // Sincronizar al volver a estar en linea
         window.addEventListener('online', sincronizar);
         
         // ========== DESCARGAR DE SUPABASE AL INICIAR ==========
         async function descargarDatosDeSupabase() {
             try {
-                console.log("Intentando conectar a Supabase...");
-                
-                // 1. Descargar Productos
                 const { data: productosNube, error: errProd } = await supabaseClient.from('productos').select('*');
                 if (errProd) throw errProd;
                 if (productosNube && productosNube.length > 0) {
                     await db.productos.bulkPut(productosNube);
                 }
 
-                // 2. Descargar Ventas <--- AÑADIDO
                 const { data: ventasNube, error: errVent } = await supabaseClient.from('ventas').select('*');
                 if (errVent) throw errVent;
                 if (ventasNube && ventasNube.length > 0) {
                     await db.ventas.bulkPut(ventasNube);
                 }
 
-                // 3. Descargar Detalle de Ventas <--- AÑADIDO
                 const { data: detallesNube, error: errDet } = await supabaseClient.from('ventas_detalle').select('*');
                 if (errDet) throw errDet;
                 if (detallesNube && detallesNube.length > 0) {
@@ -1085,18 +1134,14 @@
                 if (typeof cargarHistorial === "function") cargarHistorial();
                 if (typeof cargarResumen === "function") cargarResumen();
                 
-                toast('Inventario y ventas sincronizados desde la nube');
-                
             } catch (e) {
                 console.error("Error al descargar de Supabase:", e);
-                toast('Error de conexión con la nube');
             }
         }
 
-      
         // ========== INICIO ==========
-        cargarInventario(); // Carga lo que tengas en Dexie (rápido)
-        descargarDatosDeSupabase(); // Se conecta a internet para descargar lo último
+        cargarInventario();
+        descargarDatosDeSupabase();
     })();
     </script>
 </body>
