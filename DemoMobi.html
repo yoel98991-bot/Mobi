@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Mobi - Pasajero (Ruta Animada en Tiempo Real)</title>
+    <title>Mobi - Pasajero (Precios y Pago QR Mejorado)</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -388,7 +388,7 @@
             fill: var(--primary);
         }
 
-        /* MODAL */
+        /* MODALES */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -402,9 +402,6 @@
             align-items: center;
             padding: 1rem;
         }
-        .modal-overlay.hidden {
-            display: none;
-        }
         .modal-card {
             background: var(--white);
             border-radius: 24px;
@@ -416,14 +413,8 @@
             animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
-            from {
-                transform: translateY(40px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .modal-icon-check {
             margin-bottom: 0.8rem;
@@ -445,75 +436,60 @@
             color: var(--text-dark);
             margin-bottom: 1.5rem;
         }
-        .modal-price span {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        .qr-container {
-            background: #F5F5F5;
-            border-radius: 16px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .qr-container img {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-            border-radius: 12px;
-            background: white;
-            padding: 0.3rem;
-        }
-        .qr-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-        }
-        .modal-actions {
+        
+        .modal-actions-col {
             display: flex;
+            flex-direction: column;
             gap: 0.8rem;
-            margin-bottom: 1rem;
         }
+
         .btn-modal-secondary {
-            flex: 1;
             background: #F0F0F0;
             border: none;
-            border-radius: 12px;
-            padding: 0.7rem 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 600;
+            border-radius: 14px;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.3rem;
+            gap: 0.5rem;
             color: var(--text-dark);
-            text-decoration: none;
             transition: 0.2s;
         }
-        .btn-modal-secondary:hover {
-            background: #E0E0E0;
-        }
-        .btn-modal-secondary svg {
-            width: 18px;
-            height: 18px;
-            stroke: currentColor;
-            fill: none;
-        }
+        .btn-modal-secondary:hover { background: #E0E0E0; }
+
         .btn-modal-primary {
-            width: 100%;
             background: var(--text-dark);
             color: var(--primary);
             border: none;
             border-radius: 14px;
-            padding: 0.8rem;
+            padding: 1rem;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .btn-modal-primary:hover {
-            opacity: 0.9;
+        .btn-modal-primary:hover { opacity: 0.9; }
+
+        /* Área de captura limpia para el QR */
+        .qr-capture-area {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 16px;
+            display: inline-block; /* Ajusta el ancho al contenido */
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .qr-capture-area img {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
         }
     </style>
 </head>
@@ -521,6 +497,7 @@
 
     <div class="app-container">
 
+        <!-- HEADER -->
         <div class="header">
             <img src="https://i.ibb.co/SXFXKTsk/20260803-012907-0000.png" alt="Mobi" class="logo">
             <button class="btn-rewards">
@@ -529,6 +506,7 @@
             </button>
         </div>
 
+        <!-- MAPA -->
         <div class="map-section">
             <div id="map"></div>
 
@@ -546,6 +524,7 @@
             </button>
         </div>
 
+        <!-- BOTTOM SHEET -->
         <div class="bottom-sheet">
             <div class="location-card">
                 <div class="input-row" id="pickup-row">
@@ -565,22 +544,23 @@
             </div>
 
             <div class="ride-options" id="ride-options-container">
-                <div class="ride-card active" data-type="comfort" data-base="10" data-perkm="4">
+                <!-- PRECIOS REAJUSTADOS (Base + PerKm) -->
+                <div class="ride-card active" data-type="comfort" data-base="5" data-perkm="2">
                     <div class="car-img-placeholder" style="background-image: url('https://i.ibb.co/4g4YwfGV/1785764572855.png');"></div>
                     <div class="ride-details">
                         <div class="ride-title">Mobi Comfort</div>
                         <div class="ride-desc">Viajes cómodos y seguros</div>
                     </div>
-                    <div class="ride-price">Desde Bs 25</div>
+                    <div class="ride-price">Desde Bs 10</div>
                 </div>
 
-                <div class="ride-card" data-type="plus" data-base="15" data-perkm="6">
+                <div class="ride-card" data-type="plus" data-base="8" data-perkm="3">
                     <div class="car-img-placeholder" style="background-image: url('');"></div>
                     <div class="ride-details">
                         <div class="ride-title">Mobi Plus</div>
                         <div class="ride-desc">Autos más espaciosos</div>
                     </div>
-                    <div class="ride-price">Desde Bs 35</div>
+                    <div class="ride-price">Desde Bs 15</div>
                 </div>
             </div>
 
@@ -605,9 +585,9 @@
             </a>
         </nav>
 
-        <!-- MODAL DE VIAJE COMPLETADO -->
-        <div class="modal-overlay hidden" id="modal-overlay">
-            <div class="modal-card" id="modal-card-content">
+        <!-- 1. MODAL DE SELECCIÓN DE PAGO -->
+        <div class="modal-overlay hidden" id="modal-payment-method">
+            <div class="modal-card">
                 <div class="modal-icon-check">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 6L9 17l-5-5"/>
@@ -616,23 +596,43 @@
                 <h3 class="modal-title">Viaje completado</h3>
                 <p class="modal-subtitle" id="modal-destination">Destino: --</p>
                 <div class="modal-price" id="modal-price">Bs 0.00</div>
-                <div class="qr-container">
-                    <img id="qr-image" src="https://i.ibb.co/b5zVWwcw/IMG-20260724-WA0098.jpg" alt="QR de pago" crossorigin="anonymous" />
-                    <p class="qr-label">Escanea el código QR para realizar el pago</p>
-                </div>
-                <div class="modal-actions">
-                    <a id="btn-download-qr" href="https://i.ibb.co/b5zVWwcw/IMG-20260724-WA0098.jpg" download="Mobi-QR-Pago.jpg" class="btn-modal-secondary">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Descargar QR
-                    </a>
-                    <button id="btn-capture-modal" class="btn-modal-secondary">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        Guardar comprobante
+                
+                <p style="margin-bottom: 15px; font-weight: 600; font-size: 0.9rem;">Selecciona tu método de pago</p>
+
+                <div class="modal-actions-col">
+                    <button id="btn-pay-cash" class="btn-modal-secondary">
+                        💵 Pagar en Efectivo
+                    </button>
+                    <button id="btn-pay-qr" class="btn-modal-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"/><path d="M7 11h10v2H7z"/></svg>
+                        Pagar con QR
                     </button>
                 </div>
-                <button id="btn-close-modal" class="btn-modal-primary">Cerrar</button>
             </div>
         </div>
+
+        <!-- 2. MODAL EXCLUSIVO DE QR (Para capturar limpio) -->
+        <div class="modal-overlay hidden" id="modal-qr-only">
+            <div class="modal-card">
+                <h3 class="modal-title" style="font-size: 1.2rem; margin-bottom: 1rem;">Código de Pago</h3>
+                
+                <!-- ESTE ES EL CONTENEDOR QUE SE CAPTURARÁ, 100% LIMPIO -->
+                <div id="qr-capture-area" class="qr-capture-area">
+                    <img id="qr-image" src="https://i.ibb.co/b5zVWwcw/IMG-20260724-WA0098.jpg" alt="QR de pago" crossorigin="anonymous" />
+                </div>
+
+                <div class="modal-actions-col">
+                    <button id="btn-capture-qr" class="btn-modal-secondary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Guardar imagen QR
+                    </button>
+                    <button id="btn-close-qr-modal" class="btn-modal-primary">
+                        Finalizar viaje
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -648,7 +648,7 @@
         let isSelectingDestination = false;
         let isRideActive = false;
         let fullRouteCoords = [];
-        let currentRideType = 'comfort'; // tipo seleccionado
+        let currentRideType = 'comfort'; 
 
         const centerPin = document.getElementById('center-pin');
         const btnConfirmMap = document.getElementById('btn-confirm-dest');
@@ -656,11 +656,17 @@
         const rideOptionsContainer = document.getElementById('ride-options-container');
         const btnRequestRide = document.getElementById('btn-request-ride');
         const locateBtn = document.getElementById('btn-locate');
-        const modalOverlay = document.getElementById('modal-overlay');
+        
+        // Elementos de Modales
+        const modalPaymentMethod = document.getElementById('modal-payment-method');
+        const modalQrOnly = document.getElementById('modal-qr-only');
         const modalPrice = document.getElementById('modal-price');
         const modalDestination = document.getElementById('modal-destination');
-        const btnCloseModal = document.getElementById('btn-close-modal');
-        const btnCaptureModal = document.getElementById('btn-capture-modal');
+        
+        const btnPayCash = document.getElementById('btn-pay-cash');
+        const btnPayQr = document.getElementById('btn-pay-qr');
+        const btnCaptureQr = document.getElementById('btn-capture-qr');
+        const btnCloseQrModal = document.getElementById('btn-close-qr-modal');
 
         // 1. Inicializar Mapa
         function initMap(lat, lng) {
@@ -701,18 +707,14 @@
                     sub: (parts[1] ? parts[1].trim() : 'Ciudad')
                 };
             } catch (e) {
-                return {
-                    main: 'Ubicación seleccionada',
-                    sub: 'Lat: ' + lat.toFixed(4)
-                };
+                return { main: 'Ubicación seleccionada', sub: 'Lat: ' + lat.toFixed(4) };
             }
         }
 
-        // 3. Trazar ruta real y extraer coordenadas
+        // 3. Trazar ruta
         async function drawRealRoute(lat1, lng1, lat2, lng2) {
             try {
-                const url =
-                    `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&overview=full`;
+                const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&overview=full`;
                 const response = await fetch(url);
                 const data = await response.json();
 
@@ -721,35 +723,20 @@
                     fullRouteCoords = routeGeoJSON.map(coord => [coord[1], coord[0]]);
 
                     if (routeLine) map.removeLayer(routeLine);
-
-                    routeLine = L.polyline(fullRouteCoords, {
-                        color: '#1C1C1C',
-                        weight: 5,
-                        opacity: 0.8
-                    }).addTo(map);
-
+                    routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 5, opacity: 0.8 }).addTo(map);
                     map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
                     return true;
                 }
-            } catch (e) {
-                console.error("Error obteniendo la ruta", e);
-            }
+            } catch (e) { console.error(e); }
+            
             // Fallback línea recta
-            fullRouteCoords = [
-                [lat1, lng1],
-                [lat2, lng2]
-            ];
+            fullRouteCoords = [[lat1, lng1], [lat2, lng2]];
             if (routeLine) map.removeLayer(routeLine);
-            routeLine = L.polyline(fullRouteCoords, {
-                color: '#1C1C1C',
-                weight: 4,
-                dashArray: '8, 8'
-            }).addTo(map);
+            routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
             map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
             return true;
         }
 
-        // 4. Calcular distancia de la ruta en km
         function calculateDistance(coords) {
             let totalDist = 0;
             for (let i = 0; i < coords.length - 1; i++) {
@@ -758,39 +745,30 @@
             return totalDist / 1000; // km
         }
 
-        // 5. Calcular precio según tipo de viaje y distancia
         function calculatePrice(distanceKm, rideType) {
             const activeCard = document.querySelector(`.ride-card[data-type="${rideType}"]`);
-            let base = 10,
-                perKm = 4;
+            let base = 5, perKm = 2; // Precios reducidos por defecto
             if (activeCard) {
-                base = parseFloat(activeCard.getAttribute('data-base')) || 10;
-                perKm = parseFloat(activeCard.getAttribute('data-perkm')) || 4;
+                base = parseFloat(activeCard.getAttribute('data-base')) || 5;
+                perKm = parseFloat(activeCard.getAttribute('data-perkm')) || 2;
             }
             const effectiveDistance = Math.max(1.5, distanceKm); // mínimo 1.5 km
             return (base + effectiveDistance * perKm).toFixed(2);
         }
 
-        // 6. Actualizar tipo de viaje activo
         function updateActiveRideType() {
             const activeCard = document.querySelector('.ride-card.active');
-            if (activeCard) {
-                currentRideType = activeCard.getAttribute('data-type');
-            }
+            if (activeCard) currentRideType = activeCard.getAttribute('data-type');
         }
 
-        // 7. Iniciar Selección de Destino
         dropoffRow.addEventListener('click', () => {
             if (isRideActive) return;
-
             isSelectingDestination = true;
             rideOptionsContainer.classList.add('hidden');
             btnRequestRide.classList.add('hidden');
             locateBtn.style.bottom = '80px';
-
             centerPin.style.display = 'flex';
             btnConfirmMap.style.display = 'flex';
-
             document.getElementById('display-dropoff').textContent = 'Mueve el mapa...';
             document.getElementById('display-dropoff-sub').textContent = 'Apunta donde quieres ir';
 
@@ -799,7 +777,6 @@
             fullRouteCoords = [];
         });
 
-        // 8. Confirmar Destino
         btnConfirmMap.addEventListener('click', async () => {
             isSelectingDestination = false;
             const center = map.getCenter();
@@ -817,8 +794,7 @@
                 icon: L.divIcon({ className: '', html: destHtml, iconSize: [20, 20], iconAnchor: [10, 10] })
             }).addTo(map);
 
-            btnRequestRide.innerHTML =
-                'Calculando ruta... <span style="display:inline-block;width:16px;height:16px;border:2px solid #1C1C1C;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>';
+            btnRequestRide.innerHTML = 'Calculando ruta... <span style="display:inline-block;width:16px;height:16px;border:2px solid #1C1C1C;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>';
             btnRequestRide.style.background = '#e5c100';
             btnRequestRide.style.pointerEvents = 'none';
 
@@ -828,13 +804,11 @@
 
             await drawRealRoute(currentLat, currentLng, destLat, destLng);
 
-            btnRequestRide.innerHTML =
-                'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+            btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
             btnRequestRide.style.background = 'var(--primary)';
             btnRequestRide.style.pointerEvents = 'auto';
         });
 
-        // 9. ANIMACIÓN: Simular el Viaje Real
         function startRideSimulation(coords) {
             isRideActive = true;
             updateActiveRideType();
@@ -871,36 +845,28 @@
                 map.setView([lat, lng], map.getZoom(), { animate: false });
 
                 if (routeLine) {
-                    const remainingPath = [
-                        [lat, lng], ...coords.slice(index + 1)
-                    ];
+                    const remainingPath = [[lat, lng], ...coords.slice(index + 1)];
                     routeLine.setLatLngs(remainingPath);
                 }
 
                 requestAnimationFrame(animate);
             }
-
             animate();
         }
 
         function finishRide() {
             isRideActive = false;
-
-            // Calcular precio final
             const distanceKm = calculateDistance(fullRouteCoords);
             const finalPrice = calculatePrice(distanceKm, currentRideType);
             const destAddress = document.getElementById('display-dropoff').textContent || 'Destino seleccionado';
 
-            // Actualizar modal
             modalPrice.textContent = `Bs ${finalPrice}`;
             modalDestination.textContent = `Destino: ${destAddress}`;
 
-            // Mostrar modal
-            modalOverlay.classList.remove('hidden');
+            // Muestra Modal de Métodos de Pago
+            modalPaymentMethod.classList.remove('hidden');
 
-            // Reiniciar botón principal
-            btnRequestRide.innerHTML =
-                'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+            btnRequestRide.innerHTML = 'Pedir un viaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
             btnRequestRide.style.background = 'var(--primary)';
             btnRequestRide.style.color = 'var(--text-dark)';
             btnRequestRide.style.pointerEvents = 'auto';
@@ -910,7 +876,6 @@
             fullRouteCoords = [];
             if (routeLine) map.removeLayer(routeLine);
             if (destinationMarker) map.removeLayer(destinationMarker);
-
             document.getElementById('display-dropoff').textContent = '¿A dónde vas?';
             document.getElementById('display-dropoff-sub').textContent = 'Toca para buscar destino en el mapa';
 
@@ -922,48 +887,56 @@
             map.setView([currentLat, currentLng], 16);
         }
 
-        // 10. Eventos del Modal
-        btnCloseModal.addEventListener('click', () => {
-            modalOverlay.classList.add('hidden');
+        // ================== LOGICA DE LOS NUEVOS MODALES ==================
+
+        // 1. Pagar con Efectivo
+        btnPayCash.addEventListener('click', () => {
+            modalPaymentMethod.classList.add('hidden');
+            alert("Gracias por usar Mobi. El cobro se realizará en efectivo al conductor.");
             resetAfterRide();
         });
 
-        // Cerrar modal al hacer clic fuera
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                modalOverlay.classList.add('hidden');
-                resetAfterRide();
-            }
+        // 2. Abrir Modal de QR
+        btnPayQr.addEventListener('click', () => {
+            modalPaymentMethod.classList.add('hidden');
+            modalQrOnly.classList.remove('hidden');
         });
 
-        // Capturar comprobante con html2canvas
-        btnCaptureModal.addEventListener('click', async () => {
-            const modalCard = document.getElementById('modal-card-content');
-            btnCaptureModal.textContent = 'Generando...';
-            btnCaptureModal.disabled = true;
+        // 3. Cerrar Modal QR y finalizar
+        btnCloseQrModal.addEventListener('click', () => {
+            modalQrOnly.classList.add('hidden');
+            resetAfterRide();
+        });
+
+        // 4. Capturar SOLO EL CONTENEDOR DEL QR
+        btnCaptureQr.addEventListener('click', async () => {
+            const qrCaptureArea = document.getElementById('qr-capture-area');
+            const originalIcon = btnCaptureQr.innerHTML;
+            btnCaptureQr.textContent = 'Guardando...';
+            btnCaptureQr.disabled = true;
+
             try {
-                const canvas = await html2canvas(modalCard, {
-                    scale: 2,
+                // html2canvas ahora solo apunta al div "qr-capture-area" (fondo blanco limpio)
+                const canvas = await html2canvas(qrCaptureArea, {
+                    scale: 3, // Alta calidad para que el banco lo lea bien
                     backgroundColor: '#FFFFFF',
-                    allowTaint: true,
-                    useCORS: true
+                    useCORS: true,
+                    logging: false
                 });
                 const link = document.createElement('a');
-                link.download = 'Mobi-Comprobante-Viaje.png';
+                link.download = 'Mobi-Pago-QR.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                btnCaptureModal.innerHTML =
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Guardar comprobante';
             } catch (err) {
-                alert('No se pudo capturar la pantalla. Usa el botón "Descargar QR" como alternativa.');
-                btnCaptureModal.innerHTML =
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Guardar comprobante';
+                alert('No se pudo guardar la imagen QR. Intenta tomar una captura de pantalla.');
             } finally {
-                btnCaptureModal.disabled = false;
+                btnCaptureQr.innerHTML = originalIcon;
+                btnCaptureQr.disabled = false;
             }
         });
 
-        // 11. Pedir Viaje
+        // ==================================================================
+
         btnRequestRide.addEventListener('click', () => {
             if (fullRouteCoords.length > 0 && !isRideActive) {
                 updateActiveRideType();
@@ -971,14 +944,12 @@
                 btnRequestRide.style.background = '#1C1C1C';
                 btnRequestRide.style.color = '#FFD700';
                 btnRequestRide.style.pointerEvents = 'none';
-
                 startRideSimulation(fullRouteCoords);
             } else if (fullRouteCoords.length === 0) {
                 alert("Selecciona tu destino en el mapa primero.");
             }
         });
 
-        // 12. Selección de Vehículo
         document.querySelectorAll('.ride-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('active'));
@@ -987,14 +958,12 @@
             });
         });
 
-        // 13. Geolocalización
         function requestLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     async (pos) => {
                         currentLat = pos.coords.latitude;
                         currentLng = pos.coords.longitude;
-
                         const address = await getAddressFromCoords(currentLat, currentLng);
                         document.getElementById('display-pickup').textContent = address.main;
                         document.getElementById('display-pickup-sub').textContent = address.sub;
@@ -1005,9 +974,7 @@
                             passengerMarker.setLatLng([currentLat, currentLng]);
                         }
                     },
-                    () => {
-                        if (!map) initMap(currentLat, currentLng);
-                    }
+                    () => { if (!map) initMap(currentLat, currentLng); }
                 );
             } else {
                 if (!map) initMap(currentLat, currentLng);
@@ -1017,14 +984,8 @@
         locateBtn.addEventListener('click', requestLocation);
         window.onload = requestLocation;
 
-        // Animación para el spinner de carga
         const styleSheet = document.createElement("style");
-        styleSheet.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
+        styleSheet.textContent = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
         document.head.appendChild(styleSheet);
     </script>
 </body>
