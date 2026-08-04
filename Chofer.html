@@ -3,633 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaVita - Panel Gerencial Completo</title>
-    <!-- FontAwesome & Chart.js -->
+    <title>AquaVita - App Chofer</title>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
-            --bg-body: #f8fafc;
-            --surface: #ffffff;
-            --surface-subtle: #f1f5f9;
-            --primary: #0284c7;
-            --primary-dark: #0369a1;
-            --primary-light: #e0f2fe;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --warning: #f59e0b;
-            --warning-light: #fef3c7;
-            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
-            --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
-            --radius-lg: 20px;
-            --radius-md: 14px;
+            --bg: #f1f5f9; --surface: #ffffff;
+            --primary: #0284c7; --primary-active: #0369a1;
+            --text-main: #0f172a; --text-muted: #64748b;
+            --border: #e2e8f0; --success: #10b981; --warning: #f59e0b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            line-height: 1.4;
-            padding-bottom: 50px;
-        }
-
-        /* --- ANIMACIONES --- */
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(18px);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            will-change: opacity, transform;
-        }
-        .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
-
-        /* --- HEADER --- */
-        header {
-            background-color: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            color: var(--surface);
-            padding: 1rem 1.25rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .logo { font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
-        .logo-icon {
-            width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0284c7);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 0.9rem;
-        }
-        .live-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.7rem;
-            font-weight: 700; padding: 4px 10px; border-radius: 20px;
-        }
-        .pulse-dot {
-            width: 6px; height: 6px; background-color: #34d399; border-radius: 50%;
-            animation: pulse 1.8s infinite;
-        }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
-
-        /* --- LAYOUT PRINCIPAL --- */
-        main { padding: 1.25rem; max-width: 500px; margin: 0 auto; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; }
-        .section-title { font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .section-badge { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
-
-        /* --- KPIS --- */
-        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
-        .kpi-card.featured { grid-column: span 2; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border: none; }
-        .kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .kpi-title { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
-        .kpi-card.featured .kpi-title { color: #94a3b8; }
-        .kpi-icon-wrapper { width: 32px; height: 32px; border-radius: 8px; background-color: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .kpi-card.featured .kpi-icon-wrapper { background-color: rgba(255, 255, 255, 0.1); color: #38bdf8; }
-        .kpi-value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
-        .kpi-card.featured .kpi-value { font-size: 1.8rem; }
-        .kpi-trend { margin-top: 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background-color: var(--success-light); color: var(--success); }
-        .kpi-card.featured .kpi-trend { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
-
-        /* --- ALMACENES MÓVILES (FLOTA) --- */
-        .fleet-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
-        .fleet-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm); }
-        .fleet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .fleet-name { font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .fleet-trip { background-color: var(--primary-light); color: var(--primary-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        .fleet-chofer { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .fleet-chofer i { color: var(--primary); }
+        body { background-color: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* --- PANTALLAS --- */
+        .screen { display: none !important; flex-direction: column; height: 100%; width: 100%; overflow-y: auto; padding-bottom: 80px; }
+        .screen.active { display: flex !important; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- HEADER MÓVIL --- */
+        .mobile-header { background: #0f172a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .mobile-header h1 { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0;}
+        .route-badge { background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
+
+        /* --- CONTENEDORES --- */
+        .container { padding: 20px; }
         
-        .inventory-bar { width: 100%; height: 10px; background-color: var(--surface-subtle); border-radius: 5px; overflow: hidden; margin: 10px 0; }
-        .inventory-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); border-radius: 5px; transition: width 0.8s ease; }
-        .inventory-fill.low { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        /* --- TARJETA DE STOCK --- */
+        .stock-card { background: var(--primary); color: white; border-radius: 20px; padding: 20px; text-align: left; margin-bottom: 20px; box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4); }
+        .stock-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; opacity: 0.9; margin-bottom: 5px; }
+        .stock-number { font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 5px; }
+        .stock-number span { font-size: 1.2rem; font-weight: 600; display: block; margin-top: -5px; opacity: 0.9; }
+
+        /* --- FORMULARIO RÁPIDO (3 CLICS) --- */
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid var(--border); }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+        .input-field { width: 100%; background: var(--bg); border: 2px solid var(--border); border-radius: 12px; padding: 15px; font-size: 1rem; font-weight: 600; outline: none; transition: 0.2s; }
+        .input-field:focus { border-color: var(--primary); background: white; }
+
+        /* Stepper Cantidad */
+        .stepper { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 15px; border: 2px solid var(--border); padding: 5px; }
+        .stepper-btn { width: 50px; height: 50px; border-radius: 12px; background: white; border: none; font-size: 1.5rem; font-weight: 800; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        .stepper-btn:active { transform: scale(0.95); background: var(--bg); }
+        .stepper-value { font-size: 2rem; font-weight: 900; color: var(--text-main); flex: 1; text-align: center; }
+
+        /* Métodos de Pago (Grid) */
+        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pay-btn { background: var(--bg); border: 2px solid var(--border); border-radius: 12px; padding: 15px 10px; font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .pay-btn i { font-size: 1.5rem; }
+        .pay-btn.selected { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
         
-        .fleet-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
-        .status-ruta { color: var(--warning); display: flex; align-items: center; gap: 4px; }
-        .status-planta { color: var(--success); display: flex; align-items: center; gap: 4px; }
-        .status-planta i { animation: fa-spin 2s linear infinite; }
+        .pay-efectivo.selected { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .pay-qr.selected { background: #e0f2fe; border-color: #0ea5e9; color: #0369a1; }
+        .pay-transf.selected { background: #f3e8ff; border-color: #a855f7; color: #7e22ce; }
+        .pay-credito.selected { background: #fef3c7; border-color: #f59e0b; color: #b45309; }
 
-        /* --- OPERACIONES Y DESPACHO (ADMIN) --- */
-        .admin-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 1.5rem; }
-        .form-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; box-shadow: var(--shadow-sm); }
-        .form-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: var(--primary-dark); }
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background: var(--bg-body); color: var(--text-main); }
-        .input-group input:focus, .input-group select:focus { border-color: var(--primary); background: var(--surface); }
+        /* Botón Enorme Registrar */
+        .btn-massive { width: 100%; background: var(--success); color: white; border: none; border-radius: 15px; padding: 20px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); cursor: pointer; transition: 0.2s; }
+        .btn-massive:active { transform: scale(0.98); box-shadow: none; }
+        .btn-massive:disabled { background: var(--text-muted); opacity: 0.5; pointer-events: none; }
+
+        /* --- LOGIN (SELECCIÓN DE RUTA) --- */
+        .login-wrapper { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: white; text-align: left; }
+        .login-wrapper .logo-icon { width: 70px; height: 70px; font-size: 2rem; background: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(2,132,199,0.3); align-self: flex-start; }
         
-        .btn-primary { width: 100%; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s; }
-        .btn-primary:active { opacity: 0.8; }
-        .btn-secondary { background: #10b981; }
+        /* --- BOTTOM NAVIGATION --- */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .nav-item { flex: 1; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; }
+        .nav-item i { font-size: 1.2rem; }
+        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-        /* --- TABLA DE CHOFERES --- */
-        .table-container { overflow-x: auto; margin-top: 15px; border-radius: 8px; border: 1px solid var(--border); }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: var(--surface); }
-        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
-        .data-table th { color: var(--text-muted); font-weight: 700; background: var(--surface-subtle); font-size: 0.75rem; text-transform: uppercase; }
-        .data-table tr:last-child td { border-bottom: none; }
-        .btn-edit { background: var(--warning-light); color: var(--warning); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 700; font-family: inherit; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
-        .btn-edit:active { transform: scale(0.95); }
+        /* --- RESUMEN (ARQUEO) --- */
+        .arqueo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .arqueo-box { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; padding: 15px; text-align: left; }
+        .arqueo-box .val { font-size: 1.3rem; font-weight: 900; color: var(--text-main); margin-top: 5px; }
 
-        /* --- LISTA DE DESPACHOS --- */
-        .delivery-list-wrapper { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
-        .delivery-item { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
-        .delivery-left { display: flex; align-items: center; gap: 12px; }
-        .truck-avatar { width: 38px; height: 38px; border-radius: 10px; background-color: var(--surface-subtle); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary-dark); font-size: 0.9rem; }
-        .delivery-client { font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
-        .delivery-meta-sub { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-        .delivery-right { text-align: right; }
-        .delivery-price { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
-        
-        .payment-pill { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; display: inline-block; margin-top: 3px; }
-        .pay-efectivo { background: #dcfce7; color: #15803d; }
-        .pay-qr { background: #e0f2fe; color: #0369a1; }
-        .pay-credito { background: #fef3c7; color: #b45309; }
-        .pay-transferencia { background: #f3e8ff; color: #7e22ce; }
-
-        /* --- GRÁFICO FLUIDO --- */
-        .chart-card { background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
-        .chart-header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); }
-        .chart-stat-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-        .chart-stat-val { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
-        .chart-container { position: relative; height: 220px; width: 100%; }
-
-        .loading-text { text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 20px; }
+        /* Toast / Alertas */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 15px 25px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; z-index: 1000; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo"><div class="logo-icon"><i class="fa-solid fa-droplet"></i></div>AQUAVITA</div>
-        <div class="live-pill"><div class="pulse-dot"></div>En Vivo</div>
+    <!-- MENSAJE TOAST (Flotante) -->
+    <div id="toast" class="toast"><i class="fa-solid fa-check-circle"></i> Venta Registrada</div>
+
+    <!-- PANTALLA 1: SELECCIONAR RUTA (LOGIN) -->
+    <div id="screen-login" class="screen active login-wrapper">
+        <div class="logo-icon"><i class="fa-solid fa-droplet"></i></div>
+        <div style="width: 100%;">
+            <h1 style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">AquaVita</h1>
+            <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 30px;">App para Choferes</p>
+        </div>
+
+        <div class="card" style="width: 100%;">
+            <div class="input-group">
+                <label><i class="fa-solid fa-truck"></i> Selecciona tu Unidad</label>
+                <select id="flota-select" class="input-field">
+                    <option value="">Cargando rutas activas...</option>
+                </select>
+            </div>
+            <button onclick="iniciarTurno()" class="btn-massive" style="background: var(--primary);">Entrar <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- HEADER DE LA APP (Visible en Venta y Arqueo) -->
+    <header id="app-header" class="mobile-header" style="display: none;">
+        <h1><i class="fa-solid fa-droplet" style="color: #38bdf8;"></i> AquaVita</h1>
+        <div id="header-ruta" class="route-badge">Ruta 1</div>
     </header>
 
-    <main>
-        <!-- SECCIÓN 1: KPIs RESUMEN -->
-        <section class="fade-in-section">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Balance de Hoy</h2>
-                <span class="section-badge" id="current-date">Cargando...</span>
+    <!-- PANTALLA 2: REGISTRO DE VENTA -->
+    <div id="screen-venta" class="screen">
+        <div class="container">
+            <!-- Stock Disponible -->
+            <div class="stock-card">
+                <div class="stock-title"><i class="fa-solid fa-box"></i> Inventario Actual</div>
+                <div class="stock-number" id="ui-stock">-- <span style="font-size: 1.1rem; font-weight: 600;">Botellones Restantes</span></div>
             </div>
-            
-            <div class="kpi-grid">
-                <div class="kpi-card featured">
-                    <div class="kpi-top">
-                        <span class="kpi-title">Ingresos Totales</span>
-                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-sack-dollar"></i></div>
-                    </div>
-                    <div class="kpi-value" id="kpi-ingresos">Bs. 0.00</div>
-                    <div class="kpi-trend"><i class="fa-solid fa-arrow-trend-up"></i> Actualizado</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-top">
-                        <span class="kpi-title">Despachos</span>
-                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-truck-ramp-box"></i></div>
-                    </div>
-                    <div class="kpi-value" id="kpi-entregas">0</div>
-                    <div class="kpi-trend"><i class="fa-solid fa-circle-check"></i> En curso</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-top">
-                        <span class="kpi-title">Botellones</span>
-                        <div class="kpi-icon-wrapper"><i class="fa-solid fa-bottle-water"></i></div>
-                    </div>
-                    <div class="kpi-value" id="kpi-unidades">0</div>
-                    <div class="kpi-trend" style="color: var(--primary); background: var(--primary-light);">
-                        <i class="fa-solid fa-glass-water"></i> Vendidos
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- SECCIÓN 2: ESTADO DE FLOTA -->
-        <section class="fade-in-section">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-truck-fast" style="color: var(--primary);"></i> Inventario en Ruta</h2>
-                <span class="section-badge">Almacenes Móviles</span>
-            </div>
-            
-            <div class="fleet-wrapper" id="fleet-list">
-                <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando flota...</div>
-            </div>
-        </section>
+            <!-- Formulario de 3 Clics -->
+            <div class="card">
+                <div class="input-group">
+                    <label>Cliente (Opcional)</label>
+                    <input type="text" id="v-cliente" class="input-field" placeholder="Ej: Cliente Casual" value="Cliente Casual">
+                </div>
 
-        <!-- SECCIÓN 3: OPERACIONES Y DESPACHO (ADMINISTRACIÓN) -->
-        <section class="fade-in-section">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-clipboard-list" style="color: var(--primary);"></i> Operaciones y Despacho</h2>
-                <span class="section-badge">Administración</span>
-            </div>
-            
-            <div class="admin-section">
-                <!-- FORMULARIO 1: Registrar Chofer y Vehículo -->
-                <div class="form-card">
-                    <div class="form-title"><i class="fa-solid fa-user-astronaut"></i> 1. Registrar Personal</div>
-                    <form id="form-chofer">
-                        <div class="input-group">
-                            <label>Nombre del Chofer</label>
-                            <input type="text" id="chofer-nombre" placeholder="Ej: Juan Pérez" required>
+                <div class="input-group">
+                    <label>Cantidad de Botellones</label>
+                    <div class="stepper">
+                        <button class="stepper-btn" onclick="cambiarCant(-1)">-</button>
+                        <div class="stepper-value" id="v-cant">1</div>
+                        <button class="stepper-btn" onclick="cambiarCant(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Método de Pago</label>
+                    <div class="payment-grid">
+                        <div class="pay-btn pay-efectivo selected" onclick="seleccionarPago(this, 'Efectivo')">
+                            <i class="fa-solid fa-money-bill-wave"></i> Efectivo
                         </div>
-                        <div class="input-group">
-                            <label>Número de Placa (Unidad)</label>
-                            <input type="text" id="chofer-placa" placeholder="Ej: 1234-ABC" required>
+                        <div class="pay-btn pay-qr" onclick="seleccionarPago(this, 'QR')">
+                            <i class="fa-solid fa-qrcode"></i> Pago QR
                         </div>
-                        <button type="submit" class="btn-primary" id="btn-submit-chofer">
-                            <i class="fa-solid fa-save"></i> Guardar Chofer
-                        </button>
-                    </form>
-
-                    <!-- NUEVO: Directorio de Choferes con Edición de Placa -->
-                    <hr style="margin: 25px 0 15px 0; border: 0; border-top: 1px dashed var(--border);">
-                    <div class="form-title" style="font-size: 0.85rem; margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Directorio de Choferes</div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Placa</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="choferes-tbody">
-                                <tr><td colspan="3" class="loading-text">Cargando perfiles...</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="pay-btn pay-transf" onclick="seleccionarPago(this, 'Transferencia')">
+                            <i class="fa-solid fa-building-columns"></i> Transf.
+                        </div>
+                        <div class="pay-btn pay-credito" onclick="seleccionarPago(this, 'Crédito')">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Crédito
+                        </div>
                     </div>
                 </div>
 
-                <!-- FORMULARIO 2: Despachar Unidad a la Ruta -->
-                <div class="form-card">
-                    <div class="form-title"><i class="fa-solid fa-truck-ramp-box"></i> 2. Despachar Unidad</div>
-                    <form id="form-flota">
-                        <div class="input-group">
-                            <label>Seleccionar Chofer</label>
-                            <select id="flota-chofer-select" required>
-                                <option value="">Cargando choferes...</option>
-                            </select>
+                <div class="input-group" style="margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="font-size: 1rem; font-weight: 800;">Total a Cobrar:</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-weight: 800; font-size: 1.2rem;">Bs.</span>
+                            <input type="number" id="v-total" class="input-field" style="width: 100px; padding: 10px; font-size: 1.2rem; text-align: left; border-color: var(--primary);" readonly>
                         </div>
-                        <div class="input-group">
-                            <label>Nombre de la Ruta / Zona</label>
-                            <input type="text" id="flota-ruta" placeholder="Ej: Ruta Norte" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Capacidad Máxima (Botellones)</label>
-                            <input type="number" id="flota-capacidad" placeholder="Ej: 100" min="1" required>
-                        </div>
-                        <button type="submit" class="btn-primary btn-secondary" id="btn-submit-flota">
-                            <i class="fa-solid fa-paper-plane"></i> Iniciar Ruta
-                        </button>
-                    </form>
+                    </div>
+                    
+                    <button id="btn-registrar" class="btn-massive" onclick="registrarVenta()">
+                        <i class="fa-solid fa-check"></i> Registrar Venta
+                    </button>
                 </div>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <!-- SECCIÓN 4: DESPACHOS RECIENTES -->
-        <section class="fade-in-section">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Últimas Entregas</h2>
-                <span class="section-badge">Tiempo real</span>
-            </div>
+    <!-- PANTALLA 3: MI RESUMEN (ARQUEO) -->
+    <div id="screen-arqueo" class="screen">
+        <div class="container">
+            <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 15px; text-align: left;"><i class="fa-solid fa-calculator"></i> Arqueo de Caja</h2>
             
-            <div class="delivery-list-wrapper" id="delivery-list">
-                <div class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando entregas...</div>
+            <div class="arqueo-grid">
+                <div class="arqueo-box" style="border-left: 4px solid #22c55e;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">EFECTIVO FÍSICO</div>
+                    <div class="val" id="arq-efectivo">Bs. 0</div>
+                </div>
+                <div class="arqueo-box" style="border-left: 4px solid #0ea5e9;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">QR / DIGITAL</div>
+                    <div class="val" id="arq-digital">Bs. 0</div>
+                </div>
+                <div class="arqueo-box" style="grid-column: span 2; background: var(--primary-light); border-color: var(--primary);">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: var(--primary-dark);">RECAUDACIÓN TOTAL HOY</div>
+                    <div class="val" id="arq-total" style="font-size: 1.8rem; color: var(--primary-dark);">Bs. 0</div>
+                </div>
             </div>
-        </section>
 
-        <!-- SECCIÓN 5: GRÁFICO FLUIDO -->
-        <section class="fade-in-section">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Flujo de Ventas</h2>
-                <span class="section-badge">Hoy</span>
+            <h3 style="font-size: 0.9rem; font-weight: 800; margin: 20px 0 10px 0; color: var(--text-muted); text-align: left;">VENTAS REALIZADAS HOY</h3>
+            <div id="mis-ventas-lista" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                <!-- Cargado con JS -->
             </div>
-            
-            <div class="chart-card">
-                <div class="chart-header-info">
-                    <div>
-                        <div class="chart-stat-label">Hora Pico</div>
-                        <div class="chart-stat-val" id="chart-peak">--:--</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div class="chart-stat-label">Promedio / Despacho</div>
-                        <div class="chart-stat-val" id="chart-avg">Bs. 0.00</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="fluidChart"></canvas>
-                </div>
-            </div>
-        </section>
-    </main>
+        </div>
+    </div>
+
+    <!-- NAVEGACIÓN INFERIOR -->
+    <div id="bottom-nav" class="bottom-nav" style="display: none;">
+        <div class="nav-item active" onclick="switchTab('venta', this)">
+            <i class="fa-solid fa-bottle-water"></i> Vender
+        </div>
+        <div class="nav-item" onclick="switchTab('arqueo', this); cargarMisVentas();">
+            <i class="fa-solid fa-wallet"></i> Mi Resumen
+        </div>
+    </div>
 
     <script>
+        // ==========================================
+        // CONFIGURACIÓN (SUPABASE Y PRECIOS)
+        // ==========================================
         const { createClient } = supabase;
         const supabaseUrl = 'https://dyodvgdmsrsdwcgjlitv.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5b2R2Z2Rtc3JzZHdjZ2psaXR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODM0MTYsImV4cCI6MjEwMTM1OTQxNn0.2Q_IUGGfnWytGCv01xVhiCYPPpSolGwEvly2Pp5KOKE';
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-        let fluidChartInstance = null;
-        
-        const fmtBs = (val) => `Bs. ${Number(val).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        const formatTime = (dateString) => new Date(dateString).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+        const PRECIO_BOTELLON = 15; 
 
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+        let currentFlota = null; 
+        let cantidadActual = 1;
+        let metodoPagoActual = 'Efectivo';
 
-        const initScrollAnimations = () => {
-            const sections = document.querySelectorAll('.fade-in-section');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry, index) => {
-                    if (entry.isIntersecting) { 
-                        setTimeout(() => entry.target.classList.add('is-visible'), index * 120); 
-                        observer.unobserve(entry.target); 
-                    }
-                });
-            }, { threshold: 0.1 });
-            sections.forEach(s => observer.observe(s));
-        };
-
-        // Cargar Lista de Choferes (Actualizado para llenar el Select y la Tabla)
-        async function fetchChoferesDropdown() {
-            try {
-                const { data: choferes, error } = await supabaseClient.from('choferes').select('id, nombre, placa').order('nombre');
-                if (error) throw error;
-                
-                const select = document.getElementById('flota-chofer-select');
-                const tbody = document.getElementById('choferes-tbody');
-                
-                select.innerHTML = '<option value="">Selecciona un chofer...</option>';
-                tbody.innerHTML = '';
-                
-                if(choferes.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--text-muted);">No hay choferes registrados</td></tr>';
-                }
-
-                choferes.forEach(c => {
-                    // Llenar el Dropdown de despacho
-                    select.innerHTML += `<option value="${c.id}">${c.nombre} (Placa: ${c.placa || 'N/A'})</option>`;
-                    
-                    // Llenar la Tabla del Directorio
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-weight: 600;">${c.nombre}</td>
-                            <td>${c.placa || 'N/A'}</td>
-                            <td>
-                                <button type="button" class="btn-edit" onclick="editarPlaca('${c.id}', '${c.nombre}', '${c.placa || ''}')">
-                                    <i class="fa-solid fa-pen"></i> Editar
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (error) { console.error("Error cargando choferes:", error); }
-        }
-
-        // Función global para editar la placa desde la tabla
-        window.editarPlaca = async function(id, nombre, placaActual) {
-            const nuevaPlaca = prompt(`Editar número de placa para el chofer: ${nombre}`, placaActual);
+        // ==========================================
+        // 1. INICIALIZACIÓN Y LOGIN
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('v-total').value = PRECIO_BOTELLON; 
             
-            // Verificamos que no haya cancelado y que no esté vacío
-            if (nuevaPlaca !== null && nuevaPlaca.trim() !== '') {
-                try {
-                    const { error } = await supabaseClient.from('choferes')
-                        .update({ placa: nuevaPlaca.trim() })
-                        .eq('id', id);
-                        
-                    if (error) throw error;
-                    
-                    alert('Placa actualizada correctamente.');
-                    fetchChoferesDropdown(); // Recargar la tabla y el select automáticamente
-                } catch (error) {
-                    alert("Error al actualizar la placa en la base de datos.");
-                    console.error(error);
-                }
-            }
-        };
-
-        // Cargar Inventario de Flotas en Ruta
-        async function fetchFlota() {
             try {
-                const { data: flotaData, error } = await supabaseClient
+                const { data, error } = await supabaseClient
                     .from('flota')
-                    .select('*, choferes(nombre, placa)')
+                    .select('id, nombre, stock_actual, choferes(nombre)')
+                    .eq('estado', 'ruta')
+                    .gt('stock_actual', 0)
                     .order('created_at', { ascending: false });
                 
-                if (error) throw error;
+                if(error) throw error;
                 
-                const fleetContainer = document.getElementById('fleet-list');
-                fleetContainer.innerHTML = ''; 
-                
-                if(flotaData.length === 0) {
-                    fleetContainer.innerHTML = '<div class="loading-text">No hay unidades en ruta en este momento.</div>';
-                    return;
-                }
-
-                flotaData.forEach(f => {
-                    const porcentaje = Math.max(0, Math.min(100, (f.stock_actual / f.capacidad_maxima) * 100));
-                    const barClass = porcentaje < 25 ? 'inventory-fill low' : 'inventory-fill';
-                    
-                    let statusHtml = f.estado === 'ruta' 
-                        ? `<span class="status-ruta"><i class="fa-solid fa-road"></i> En Ruta</span>` 
-                        : `<span class="status-planta"><i class="fa-solid fa-arrows-rotate"></i> Recargando</span>`;
-                    
-                    const choferNombre = f.choferes ? f.choferes.nombre : 'Sin chofer asignado';
-                    const choferPlaca = f.choferes ? f.choferes.placa : 'N/A';
-
-                    fleetContainer.innerHTML += `
-                        <div class="fleet-card">
-                            <div class="fleet-header">
-                                <div class="fleet-name"><i class="fa-solid fa-truck"></i> ${f.nombre}</div>
-                                <div class="fleet-trip">En curso</div>
-                            </div>
-                            <div class="fleet-chofer">
-                                <i class="fa-solid fa-id-card"></i> ${choferNombre} • Placa: ${choferPlaca}
-                            </div>
-                            <div class="inventory-bar">
-                                <div class="${barClass}" style="width: ${porcentaje}%"></div>
-                            </div>
-                            <div class="fleet-footer">
-                                <span>Stock: ${f.stock_actual} / ${f.capacidad_maxima} Botellones</span>
-                                ${statusHtml}
-                            </div>
-                        </div>`;
+                const select = document.getElementById('flota-select');
+                select.innerHTML = '<option value="">Selecciona tu unidad...</option>';
+                data.forEach(f => {
+                    const nombreChofer = f.choferes ? f.choferes.nombre : 'Sin chofer';
+                    select.innerHTML += `<option value='${JSON.stringify(f)}'>${f.nombre} (${nombreChofer})</option>`;
                 });
-            } catch (error) { console.error("Error cargando flota:", error); }
+            } catch (error) {
+                alert("Error de conexión. Intenta recargar la página.");
+            }
+        });
+
+        function iniciarTurno() {
+            const selectVal = document.getElementById('flota-select').value;
+            if(!selectVal) return alert("Por favor, selecciona una unidad para continuar.");
+
+            currentFlota = JSON.parse(selectVal);
+            
+            document.getElementById('header-ruta').innerText = currentFlota.nombre;
+            document.getElementById('ui-stock').innerText = currentFlota.stock_actual;
+
+            document.getElementById('screen-login').classList.remove('active');
+            document.getElementById('app-header').style.display = 'flex';
+            document.getElementById('bottom-nav').style.display = 'flex';
+            document.getElementById('screen-venta').classList.add('active');
         }
 
-        // Cargar Entregas, KPIs y Gráfico
-        async function fetchEntregas() {
+        // ==========================================
+        // 2. LÓGICA DEL FORMULARIO DE VENTA
+        // ==========================================
+        
+        function cambiarCant(val) {
+            const nuevaCant = cantidadActual + val;
+            
+            if(nuevaCant < 1) return; 
+            if(nuevaCant > currentFlota.stock_actual) {
+                mostrarToast("⚠️ No tienes suficiente stock.", "warning");
+                return;
+            }
+
+            cantidadActual = nuevaCant;
+            document.getElementById('v-cant').innerText = cantidadActual;
+            document.getElementById('v-total').value = cantidadActual * PRECIO_BOTELLON;
+        }
+
+        function seleccionarPago(btnElement, metodo) {
+            document.querySelectorAll('.pay-btn').forEach(btn => btn.classList.remove('selected'));
+            btnElement.classList.add('selected');
+            metodoPagoActual = metodo;
+        }
+
+        async function registrarVenta() {
+            const btn = document.getElementById('btn-registrar');
+            const cliente = document.getElementById('v-cliente').value.trim() || 'Cliente Casual';
+            const totalCosto = parseFloat(document.getElementById('v-total').value);
+
+            if(cantidadActual > currentFlota.stock_actual) {
+                return alert("No puedes vender más del stock que tienes en el camión.");
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Registrando...';
+            btn.disabled = true;
+
             try {
-                const { data: entregas, error } = await supabaseClient
+                // 1. Insertamos la venta en la tabla entregas
+                const { error } = await supabaseClient.from('entregas').insert([{
+                    flota_id: currentFlota.id,
+                    cliente: cliente,
+                    unidades: cantidadActual,
+                    metodo_pago: metodoPagoActual,
+                    total: totalCosto
+                }]);
+
+                if(error) throw error;
+
+                // 2. NUEVA MEJORA: Restamos el stock en la base de datos principal (tabla flota)
+                const nuevoStock = currentFlota.stock_actual - cantidadActual;
+                
+                const { error: updateError } = await supabaseClient.from('flota')
+                    .update({ stock_actual: nuevoStock })
+                    .eq('id', currentFlota.id);
+                
+                if (updateError) {
+                    console.error("Error actualizando inventario en Supabase:", updateError);
+                    alert("Se registró la venta, pero hubo un problema al descontar el inventario central.");
+                }
+
+                // 3. Actualizamos la interfaz visual del chofer
+                currentFlota.stock_actual = nuevoStock;
+                document.getElementById('ui-stock').innerText = currentFlota.stock_actual;
+
+                cantidadActual = 1;
+                document.getElementById('v-cant').innerText = 1;
+                document.getElementById('v-total').value = PRECIO_BOTELLON;
+                document.getElementById('v-cliente').value = 'Cliente Casual';
+                
+                mostrarToast(`<i class="fa-solid fa-check"></i> Venta de Bs. ${totalCosto} registrada!`);
+
+                if(currentFlota.stock_actual === 0) {
+                    alert("¡Te quedaste sin botellones! Debes regresar a la planta a recargar.");
+                }
+
+            } catch (error) {
+                alert("Error al registrar la venta. Revisa tu conexión a internet.");
+                console.error(error);
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Registrar Venta';
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // 3. LÓGICA DE ARQUEO / RESUMEN
+        // ==========================================
+        
+        async function cargarMisVentas() {
+            if(!currentFlota) return;
+
+            const listContainer = document.getElementById('mis-ventas-lista');
+            listContainer.innerHTML = '<div style="text-align:left; padding: 20px; color: #64748b;"><i class="fa-solid fa-circle-notch fa-spin"></i> Calculando arqueo...</div>';
+
+            try {
+                const hoyInicio = new Date();
+                hoyInicio.setHours(0,0,0,0);
+
+                const { data, error } = await supabaseClient
                     .from('entregas')
-                    .select(`id, cliente, unidades, metodo_pago, total, created_at, flota ( nombre )`)
+                    .select('*')
+                    .eq('flota_id', currentFlota.id)
+                    .gte('created_at', hoyInicio.toISOString())
                     .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                let totalIngresos = 0, totalUnidades = 0;
-                entregas.forEach(e => { 
-                    totalIngresos += Number(e.total); 
-                    totalUnidades += Number(e.unidades); 
-                });
-                
-                document.getElementById('kpi-ingresos').innerText = fmtBs(totalIngresos);
-                document.getElementById('kpi-entregas').innerText = entregas.length;
-                document.getElementById('kpi-unidades').innerText = totalUnidades;
-                document.getElementById('chart-avg').innerText = fmtBs(entregas.length > 0 ? (totalIngresos / entregas.length) : 0);
-                
-                const listContainer = document.getElementById('delivery-list');
-                listContainer.innerHTML = entregas.length === 0 ? `<div class="loading-text">No hay entregas registradas hoy.</div>` : '';
-                
-                entregas.forEach(e => {
-                    let payClass = 'pay-efectivo'; 
-                    const metodo = (e.metodo_pago || '').toLowerCase();
-                    if (metodo.includes('qr')) payClass = 'pay-qr'; 
-                    else if (metodo.includes('crédito') || metodo.includes('credito')) payClass = 'pay-credito'; 
-                    else if (metodo.includes('transferencia')) payClass = 'pay-transferencia';
-                    
-                    const nombreFlota = e.flota ? e.flota.nombre : 'Flota Desconocida';
+
+                if(error) throw error;
+
+                let sumaEfectivo = 0;
+                let sumaDigital = 0;
+                listContainer.innerHTML = '';
+
+                if(data.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align:left; color:#64748b;">Aún no tienes ventas registradas.</div>';
+                }
+
+                data.forEach(v => {
+                    const monto = Number(v.total);
+                    if(v.metodo_pago === 'Efectivo') { sumaEfectivo += monto; }
+                    else { sumaDigital += monto; }
+
+                    const hora = new Date(v.created_at).toLocaleTimeString('es-BO', {hour: '2-digit', minute:'2-digit'});
                     
                     listContainer.innerHTML += `
-                        <div class="delivery-item">
-                            <div class="delivery-left">
-                                <div class="truck-avatar"><i class="fa-solid fa-truck-droplet"></i></div>
-                                <div>
-                                    <div class="delivery-client">${e.cliente}</div>
-                                    <div class="delivery-meta-sub">
-                                        <span><i class="fa-regular fa-clock"></i> ${formatTime(e.created_at)}</span> • <span>${nombreFlota}</span>
-                                    </div>
-                                </div>
+                        <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.9rem;">${v.cliente}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">${hora} • ${v.unidades} unidades • ${v.metodo_pago}</div>
                             </div>
-                            <div class="delivery-right">
-                                <div class="delivery-price">${fmtBs(e.total)}</div>
-                                <span class="payment-pill ${payClass}">${e.metodo_pago} (${e.unidades} u.)</span>
-                            </div>
-                        </div>`;
+                            <div style="font-weight: 900; color: var(--text-main);">Bs. ${monto}</div>
+                        </div>
+                    `;
                 });
 
-                updateChart(entregas);
-            } catch (error) { console.error("Error cargando entregas:", error); }
-        }
+                document.getElementById('arq-efectivo').innerText = `Bs. ${sumaEfectivo}`;
+                document.getElementById('arq-digital').innerText = `Bs. ${sumaDigital}`;
+                document.getElementById('arq-total').innerText = `Bs. ${sumaEfectivo + sumaDigital}`;
 
-        function updateChart(entregas) {
-            const entregasCrono = [...entregas].reverse();
-            let labels = [], dataPoints = [], acumulado = 0;
-            
-            entregasCrono.forEach(e => { 
-                acumulado += Number(e.total); 
-                labels.push(formatTime(e.created_at)); 
-                dataPoints.push(acumulado); 
-            });
-            
-            if(labels.length > 0) {
-                document.getElementById('chart-peak').innerText = labels[Math.floor(labels.length / 2)] + " aprox";
+            } catch (error) {
+                listContainer.innerHTML = '<div style="color:red; text-align:left;">Error cargando ventas.</div>';
             }
-            
-            const ctx = document.getElementById('fluidChart').getContext('2d');
-            if (fluidChartInstance) fluidChartInstance.destroy();
-            
-            const gradientFill = ctx.createLinearGradient(0, 0, 0, 200); 
-            gradientFill.addColorStop(0, 'rgba(2, 132, 199, 0.35)'); 
-            gradientFill.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
-            
-            fluidChartInstance = new Chart(ctx, { 
-                type: 'line', 
-                data: { 
-                    labels: labels.length > 0 ? labels : ['08:00', '10:00', '12:00'], 
-                    datasets: [{ 
-                        data: dataPoints.length > 0 ? dataPoints : [0, 0, 0], 
-                        borderColor: '#0284c7', borderWidth: 3, 
-                        pointBackgroundColor: '#ffffff', pointBorderColor: '#0284c7', pointBorderWidth: 2.5, 
-                        pointRadius: 4, pointHoverRadius: 6, tension: 0.42, fill: true, backgroundColor: gradientFill 
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    interaction: { mode: 'index', intersect: false }, 
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#0f172a', titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
-                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 }, padding: 10, cornerRadius: 8, displayColors: false,
-                            callbacks: { label: (context) => ` Acumulado: Bs. ${context.raw.toLocaleString('es-BO')}` }
-                        }
-                    }, 
-                    scales: { 
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' }, callback: (v) => 'Bs.' + v } }, 
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: '600' } } } 
-                    } 
-                } 
-            });
         }
 
-        // Formularios (Chofer y Flota)
-        document.getElementById('form-chofer').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit-chofer');
-            const nombre = document.getElementById('chofer-nombre').value.trim();
-            const placa = document.getElementById('chofer-placa').value.trim();
-            
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...'; btn.disabled = true;
-
-            try {
-                const { error } = await supabaseClient.from('choferes').insert([{ nombre, placa }]);
-                if (error) throw error;
-                document.getElementById('form-chofer').reset();
-                await fetchChoferesDropdown(); // Esto actualizará la tabla y el select a la vez
-                alert(`Chofer ${nombre} registrado correctamente.`);
-            } catch (error) { alert("Error al guardar chofer."); } 
-            finally { btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Chofer'; btn.disabled = false; }
-        });
-
-        document.getElementById('form-flota').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit-flota');
-            const chofer_id = document.getElementById('flota-chofer-select').value;
-            const ruta = document.getElementById('flota-ruta').value.trim();
-            const capacidad = parseInt(document.getElementById('flota-capacidad').value);
-            
-            if(!chofer_id) return alert("Selecciona un chofer primero");
-
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Despachando...'; btn.disabled = true;
-
-            try {
-                const { error } = await supabaseClient.from('flota').insert([{ 
-                    chofer_id: chofer_id, nombre: ruta, capacidad_maxima: capacidad, stock_actual: capacidad, estado: 'ruta'
-                }]);
-                if (error) throw error;
-                document.getElementById('form-flota').reset();
-                await fetchFlota();
-                alert(`Unidad despachada a ${ruta} exitosamente.`);
-            } catch (error) { alert("Error al despachar unidad."); } 
-            finally { btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Iniciar Ruta'; btn.disabled = false; }
-        });
-
         // ==========================================
-        // INICIALIZACIÓN Y REFRESCO EN TIEMPO REAL
+        // UTILIDADES Y NAVEGACIÓN
         // ==========================================
-        document.addEventListener('DOMContentLoaded', () => {
-            initScrollAnimations();
-            fetchChoferesDropdown();
-            fetchFlota();
-            fetchEntregas();
+        
+        function switchTab(tab, btnElement) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            btnElement.classList.add('active');
 
-            // Sincronización automática
-            setInterval(() => {
-                fetchFlota();
-                fetchEntregas();
-            }, 5000);
-        });
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(`screen-${tab}`).classList.add('active');
+        }
+
+        function mostrarToast(mensaje, tipo = "success") {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = mensaje;
+            toast.style.background = tipo === 'warning' ? '#f59e0b' : '#1f2937';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
     </script>
 </body>
 </html>
