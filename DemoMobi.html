@@ -322,6 +322,7 @@
             font-weight: 800;
             font-size: 1rem;
             text-align: right;
+            transition: color 0.2s;
         }
 
         .btn-request {
@@ -594,7 +595,6 @@
             </div>
 
             <div class="ride-options" id="ride-options-container">
-                <!-- PRECIOS AJUSTADOS A VALORES MÁS ACCESIBLES -->
                 <div class="ride-card active" data-type="comfort" data-base="5" data-perkm="2">
                     <div class="car-img-placeholder" style="background-image: url('https://i.ibb.co/4g4YwfGV/1785764572855.png');"></div>
                     <div class="ride-details">
@@ -635,7 +635,7 @@
             </a>
         </nav>
 
-        <!-- 1. MODAL DE OFERTA Y NEGOCIACIÓN (NUEVO) -->
+        <!-- 1. MODAL DE OFERTA Y NEGOCIACIÓN -->
         <div class="modal-overlay hidden" id="modal-offer">
             <div class="modal-card">
                 <h3 class="modal-title">Ofrece tu tarifa</h3>
@@ -782,6 +782,9 @@
                     if (routeLine) map.removeLayer(routeLine);
                     routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 5, opacity: 0.8 }).addTo(map);
                     map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+
+                    // ACTUALIZAR PRECIOS EN LAS TARJETAS APENAS SE TRAZA LA RUTA
+                    updateAllRidePrices();
                     return true;
                 }
             } catch (e) { console.error("Error al trazar ruta", e); }
@@ -790,6 +793,9 @@
             if (routeLine) map.removeLayer(routeLine);
             routeLine = L.polyline(fullRouteCoords, { color: '#1C1C1C', weight: 4, dashArray: '8, 8' }).addTo(map);
             map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+
+            // ACTUALIZAR PRECIOS EN CASO DE FALLBACK
+            updateAllRidePrices();
             return true;
         }
 
@@ -802,16 +808,31 @@
             return totalDist / 1000;
         }
 
-        // 5. Calcular precio
+        // 5. Calcular precio para un tipo de vehiculo
         function calculatePrice(distanceKm, rideType) {
             const activeCard = document.querySelector(`.ride-card[data-type="${rideType}"]`);
-            let base = 5, perKm = 2; // Precios reducidos
+            let base = 5, perKm = 2;
             if (activeCard) {
                 base = parseFloat(activeCard.getAttribute('data-base')) || 5;
                 perKm = parseFloat(activeCard.getAttribute('data-perkm')) || 2;
             }
             const effectiveDistance = Math.max(1.5, distanceKm);
             return (base + effectiveDistance * perKm).toFixed(2);
+        }
+
+        // 6. NUEVA FUNCIÓN: Actualiza el texto de precio en TODAS las tarjetas visibles
+        function updateAllRidePrices() {
+            if (!fullRouteCoords || fullRouteCoords.length === 0) return;
+            const dist = calculateDistance(fullRouteCoords);
+
+            document.querySelectorAll('.ride-card').forEach(card => {
+                const type = card.getAttribute('data-type');
+                const price = calculatePrice(dist, type);
+                const priceElem = card.querySelector('.ride-price');
+                if (priceElem) {
+                    priceElem.textContent = `Bs ${price}`;
+                }
+            });
         }
 
         function updateActiveRideType() {
@@ -915,7 +936,6 @@
             offerStatusText.textContent = '';
 
             setTimeout(() => {
-                // Cálculo aleatorio entre 3% (0.03) y 10% (0.10)
                 const randomPercent = (Math.random() * (0.10 - 0.03)) + 0.03;
                 const minAcceptablePrice = estimatedPrice * (1 + randomPercent);
 
@@ -1011,6 +1031,12 @@
 
             document.getElementById('display-dropoff').textContent = '¿A dónde vas?';
             document.getElementById('display-dropoff-sub').textContent = 'Toca para buscar destino en el mapa';
+
+            // Restaurar los textos base de las tarjetas
+            const comfortCard = document.querySelector('.ride-card[data-type="comfort"] .ride-price');
+            const plusCard = document.querySelector('.ride-card[data-type="plus"] .ride-price');
+            if (comfortCard) comfortCard.textContent = 'Desde Bs 10';
+            if (plusCard) plusCard.textContent = 'Desde Bs 15';
 
             currentLat = destLat || currentLat;
             currentLng = destLng || currentLng;
