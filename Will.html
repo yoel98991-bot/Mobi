@@ -1,4 +1,4 @@
-
+ 
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -874,12 +874,16 @@
                 for (let item of carrito) {
                     const prod = await db.productos.get(item.producto_id);
                     await db.productos.update(item.producto_id, { stock: prod.stock - item.cantidad });
+                    
+                    // AQUI AÑADIMOS EL COSTO Y EL SUBTOTAL
                     await db.ventas_detalle.add({
                         id: crypto.randomUUID(),
                         venta_id: ventaId,
                         producto_id: item.producto_id,
                         cantidad: item.cantidad,
                         precio_unitario: item.precio_venta,
+                        costo_unitario: prod.costo, 
+                        subtotal: item.cantidad * item.precio_venta, 
                         creado_en: fecha
                     });
                 }
@@ -940,9 +944,11 @@
                     let html = '';
                     for (let d of detalles) {
                         const prod = await db.productos.get(d.producto_id);
+                        // Aseguramos que siempre haya un valor para subtotal (por si hay registros antiguos vacíos)
+                        const sub = d.subtotal || (d.cantidad * d.precio_unitario) || 0; 
                         html += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:6px; color:#ddd;">
                                     <span>${prod?.nombre || 'Equipo Eliminado'} <span style="color:#888;">(x${d.cantidad})</span></span>
-                                    <span>Bs ${d.subtotal.toFixed(2)}</span>
+                                    <span>Bs ${sub.toFixed(2)}</span>
                                  </div>`;
                     }
                     detalleDiv.innerHTML = html;
@@ -967,7 +973,12 @@
                     const detalles = await db.ventas_detalle.where('venta_id').equals(v.id).toArray();
                     for (let d of detalles) {
                         const prod = await db.productos.get(d.producto_id);
-                        if (prod) ganancia += d.subtotal - (prod.costo * d.cantidad);
+                        if (prod) {
+                             // Si no existe d.subtotal, lo calcula en el aire para que no de error
+                             const sub = d.subtotal || (d.cantidad * d.precio_unitario);
+                             const costoU = d.costo_unitario || prod.costo;
+                             ganancia += sub - (costoU * d.cantidad);
+                        }
                     }
                 }
                 return ganancia;
@@ -1014,8 +1025,14 @@
                     const detalles = await db.ventas_detalle.where('venta_id').equals(v.id).toArray();
                     for (let d of detalles) {
                         await supabaseClient.from('ventas_detalle').upsert({
-                            id: d.id, venta_id: d.venta_id, producto_id: d.producto_id,
-                            cantidad: d.cantidad, precio_unitario: d.precio_unitario, creado_en: d.creado_en
+                            id: d.id, 
+                            venta_id: d.venta_id, 
+                            producto_id: d.producto_id,
+                            cantidad: d.cantidad, 
+                            precio_unitario: d.precio_unitario, 
+                            costo_unitario: d.costo_unitario || 0, // Fallback por si hay datos viejos
+                            subtotal: d.subtotal || (d.cantidad * d.precio_unitario), // Fallback
+                            creado_en: d.creado_en
                         });
                     }
                 }
@@ -1037,10 +1054,41 @@
 
         // Sincronizar al volver a estar en linea
         window.addEventListener('online', sincronizar);
+        
+        // ========== DESCARGAR DE SUPABASE AL INICIAR ==========
+        async function descargarDatosDeSupabase() {
+            try {
+                console.log("Intentando conectar a Supabase...");
+                const { data: productosNube, error } = await supabaseClient
+                    .from('productos')
+                    .select('*');
+                
+                if (error) {
+                    console.error("Error de Supabase:", error);
+                    throw error;
+                }
 
+                console.log("Productos encontrados en la nube:", productosNube);
+
+                if (productosNube && productosNube.length > 0) {
+                    await db.productos.bulkPut(productosNube);
+                    cargarInventario();
+                    toast('Inventario sincronizado desde la nube');
+                } else {
+                    console.log("La tabla de Supabase está vacía. Añade un producto desde el botón '+ Nuevo'.");
+                }
+            } catch (e) {
+                console.error("Error al descargar de Supabase:", e);
+                toast('Error de conexión con la nube');
+            }
+        }
+
+      
         // ========== INICIO ==========
-        cargarInventario();
+        cargarInventario(); // Carga lo que tengas en Dexie (rápido)
+        descargarDatosDeSupabase(); // Se conecta a internet para descargar lo último
     })();
     </script>
 </body>
 </html>
+
