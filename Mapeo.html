@@ -755,7 +755,7 @@
         </div>
     </div>
 
-    <script>
+        <script>
         // ==========================================
         // CONFIGURACIÓN SUPABASE
         // ==========================================
@@ -763,17 +763,16 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvdHl5YXBoeGp1a3RuaG5xYnBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5MjI4NzUsImV4cCI6MjEwMTQ5ODg3NX0.-GxPpwLoJk40EXBLk0PGlCV9HwLpEfJkwu3dGc4SWXU';
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Estado local (sincronizado con Supabase)
         let dbSolicitudes = [];
 
         // ==========================================
-        // OBTENER DATOS DESDE SUPABASE
+        // OBTENER DATOS Y SUSCRIPCIÓN EN TIEMPO REAL
         // ==========================================
         async function fetchSolicitudes() {
             const { data, error } = await supabaseClient
                 .from('solicitudes')
                 .select('*')
-                .order('id', { ascending: true }); // Ordena por ID
+                .order('id', { ascending: true });
 
             if (error) {
                 console.error("Error al obtener datos:", error);
@@ -781,6 +780,17 @@
             }
             dbSolicitudes = data || [];
             actualizarInterfaces();
+        }
+
+        // Activar canal en tiempo real de Supabase
+        function inicializarRealtime() {
+            supabaseClient
+                .channel('public:solicitudes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes' }, payload => {
+                    // Cada vez que ocurra un INSERT, UPDATE o DELETE en la BD se recargan los datos instantáneamente
+                    fetchSolicitudes();
+                })
+                .subscribe();
         }
 
         function getClaseEstado(estado) {
@@ -873,14 +883,13 @@
         });
 
         // ==========================================
-        // ACCIONES DEL FLUJO CON SUPABASE (CREATE & UPDATE)
+        // ACCIONES DEL FLUJO CON SUPABASE
         // ==========================================
         async function crearRequerimiento() {
             const herramienta = document.getElementById('req-herramienta').value;
             const just = document.getElementById('req-justificacion').value;
             if(!herramienta) return alert("Ingresa una herramienta");
 
-            // Generar ID consecutivo emulando la lógica anterior
             let maxNum = 99;
             dbSolicitudes.forEach(s => {
                 let num = parseInt(s.id.replace('REQ-', ''));
@@ -905,8 +914,6 @@
 
             document.getElementById('req-herramienta').value = '';
             document.getElementById('req-justificacion').value = '';
-            await fetchSolicitudes();
-            alert("Requerimiento enviado a Compras exitosamente.");
         }
 
         async function actualizarEstadoEnDB(id, nuevoEstado, nuevaUbicacion) {
@@ -917,32 +924,18 @@
 
             if(error) {
                 alert("Error al actualizar: " + error.message);
-                return;
             }
-            await fetchSolicitudes();
         }
 
-        async function comprarActivo(id) {
-            await actualizarEstadoEnDB(id, 'Comprado', 'Proveedor preparándolo');
-        }
-
-        async function enviarActivo(id) {
-            await actualizarEstadoEnDB(id, 'En Tránsito', 'Ruta hacia Bodega Central');
-        }
-
-        async function recibirBodega(id) {
-            await actualizarEstadoEnDB(id, 'En Bodega', 'Estante Principal');
-        }
-
-        async function confirmarEntrega(id) {
-            await actualizarEstadoEnDB(id, 'Entregado', 'En uso por el solicitante');
-        }
+        async function comprarActivo(id) { await actualizarEstadoEnDB(id, 'Comprado', 'Proveedor preparándolo'); }
+        async function enviarActivo(id) { await actualizarEstadoEnDB(id, 'En Tránsito', 'Ruta hacia Bodega Central'); }
+        async function recibirBodega(id) { await actualizarEstadoEnDB(id, 'En Bodega', 'Estante Principal'); }
+        async function confirmarEntrega(id) { await actualizarEstadoEnDB(id, 'Entregado', 'En uso por el solicitante'); }
 
         // ==========================================
         // RENDERIZADO DINÁMICO
         // ==========================================
         function actualizarInterfaces() {
-            // --- ADMIN ---
             document.getElementById('admin-total').innerText = dbSolicitudes.length;
 
             const tbAdmin = document.getElementById('tabla-admin');
@@ -971,7 +964,6 @@
                 renderizarMapaAdmin();
             }
 
-            // --- COMPRAS ---
             const tbCompras = document.getElementById('tabla-compras');
             tbCompras.innerHTML = '';
             dbSolicitudes.filter(s => s.estado === 'Pendiente').forEach(s => {
@@ -981,7 +973,6 @@
                 </tr>`;
             });
 
-            // --- LOGISTICA ---
             const tbLogistica = document.getElementById('tabla-logistica');
             tbLogistica.innerHTML = '';
             dbSolicitudes.filter(s => s.estado === 'Comprado').forEach(s => {
@@ -991,7 +982,6 @@
                 </tr>`;
             });
 
-            // --- BODEGA ---
             const tbBodega = document.getElementById('tabla-bodega');
             tbBodega.innerHTML = '';
             dbSolicitudes.filter(s => s.estado === 'En Tránsito').forEach(s => {
@@ -1001,7 +991,6 @@
                 </tr>`;
             });
 
-            // --- RECEPTOR ---
             const tbReceptor = document.getElementById('tabla-receptor');
             tbReceptor.innerHTML = '';
             dbSolicitudes.filter(s => s.estado === 'En Bodega').forEach(s => {
@@ -1037,8 +1026,8 @@
             appDashboard.classList.remove('hidden');
             document.getElementById(vista).classList.remove('hidden');
             
-            // Traer los datos reales al hacer login
             await fetchSolicitudes();
+            inicializarRealtime(); // Arranca la escucha en vivo al iniciar sesión
         }
 
         function cerrarSesion() {
@@ -1049,5 +1038,6 @@
 
         accessInput.addEventListener("keypress", e => { if(e.key === "Enter") verificarAcceso(); });
     </script>
+
 </body>
 </html>
